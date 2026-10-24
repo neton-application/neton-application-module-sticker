@@ -1,0 +1,11 @@
+[==========] Running 1 tests from 7 test cases.
+[----------] Global test environment set-up.
+[----------] 1 tests from StickerDefaultInstallPostgresTest
+[ RUN      ] StickerDefaultInstallPostgresTest.defaultsExplicitOptOutOrderingAndHistoryAreAccountScoped
+STICKER_DEFAULT_PG_EXECUTED: real PG/storage + defaults/opt-out/version/reinstall/reorder/account isolation/history/concurrent initialization
+[       OK ] StickerDefaultInstallPostgresTest.defaultsExplicitOptOutOrderingAndHistoryAreAccountScoped (649 ms)
+[----------] 1 tests from StickerDefaultInstallPostgresTest (649 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 tests from 1 test cases ran. (649 ms total)
+[  PASSED  ] 1 tests.

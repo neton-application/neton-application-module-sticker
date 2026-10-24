@@ -4,6 +4,7 @@ import neton.core.config.ConfigLoader
 import neton.database.api.DbContext
 import neton.storage.StorageManager
 import sticker.logic.StickerLogic
+import sticker.logic.configuredPagInspector
 import sticker.table.StickerTable
 
 object StickerRuntimeBootstrap {
@@ -15,6 +16,7 @@ object StickerRuntimeBootstrap {
         }
         val storage = ctx.get(StorageManager::class)
         require(storage.get("sticker-private").baseUrl.isBlank()) { "sticker-private must not expose a public baseUrl" }
-        ctx.bindIfAbsent(StickerLogic::class, StickerLogic(StickerTable(ctx.get(DbContext::class)), storage, base))
+        val inspector = configuredPagInspector(ConfigLoader.getString(config,"pag_inspector_executable"))
+        ctx.bindIfAbsent(StickerLogic::class, StickerLogic(StickerTable(ctx.get(DbContext::class)), storage, base, inspector))
     }
 }

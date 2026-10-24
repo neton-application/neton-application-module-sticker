@@ -97,7 +97,7 @@ class StickerHttpServerTest {
         val credentialPath = writePrivateCredentials(credentials)
         println("STICKER_HTTP_CREDENTIALS=$credentialPath")
         platform.posix.signal(platform.posix.SIGPIPE,platform.posix.SIG_IGN)
-        val adapter=DefaultHttpAdapter(HttpServerConfig(port=55474),DefaultHttpOptions(host="127.0.0.1",reactors=1,maxRequestBodyBytes=34L*1024*1024,maxBufferedRequestBytes=68L*1024*1024))
+        val adapter=DefaultHttpAdapter(HttpServerConfig(port=55474,host="127.0.0.1"),DefaultHttpOptions(reactors=1,maxRequestBodyBytes=34L*1024*1024,maxBufferedRequestBytes=68L*1024*1024))
         val ready=CompletableDeferred<Unit>()
         val server=launch(Dispatchers.Default) { adapter.start(ctx) { ready.complete(Unit) } }
         server.invokeOnCompletion { e -> if(e!=null) ready.completeExceptionally(e) }

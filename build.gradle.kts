@@ -7,7 +7,12 @@ group = "com.netonstream.app"
 version = "1.0.0"
 repositories { mavenCentral() }
 kotlin {
-    macosArm64(); linuxX64(); linuxArm64()
+    listOf(macosArm64(), linuxX64(), linuxArm64()).forEach { target ->
+        target.compilations.getByName("main").cinterops.create("pagprocess") {
+            definitionFile.set(file("src/nativeInterop/cinterop/pagprocess.def"))
+            includeDirs(file("src/nativeInterop/cinterop"))
+        }
+    }
     applyDefaultHierarchyTemplate()
     sourceSets {
         commonMain.dependencies {
@@ -44,5 +49,9 @@ extra["neton.migration.dialects"] = listOf("postgresql")
 extra["neton.migration.sqlSourceDir"] = file("sql")
 apply(from = "../../Neton/neton/scripts/embed-migration-resources.gradle.kts")
 tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest>().configureEach {
-    System.getenv("STICKER_TEST_DATABASE_URI")?.let { environment("STICKER_TEST_DATABASE_URI", it) }
+    listOf("STICKER_TEST_DATABASE_URI", "PAG_TEST_DATABASE_URI", "PAG_TEST_STORAGE_ROOT", "PAG_TEST_INSPECTOR",
+        "PAG_TEST_STICKER_ZIP", "PAG_TEST_LEGACY_PNG", "STICKER_PACK_HTTP", "STICKER_PACK_DATABASE_URI",
+        "STICKER_PACK_ROOT", "STICKER_PACK_PORT", "STICKER_PACK_INSPECTOR", "STICKER_PACK_PNG").forEach { name ->
+        System.getenv(name)?.let { environment(name, it) }
+    }
 }

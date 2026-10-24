@@ -1,0 +1,26 @@
+[==========] Running 1 tests from 8 test cases.
+[----------] Global test environment set-up.
+[----------] 1 tests from PagHttpServerTest
+[ RUN      ] PagHttpServerTest.serveLoopback
+PAG_HTTP_CREDENTIALS=/tmp/pag-postgres.ZYhIXH/http-credentials-49as9b
+PAG_HTTP_READY=http://127.0.0.1:55477
+kotlinx.coroutines.TimeoutCancellationException: Timed out waiting for 900000 ms
+    at 0   production-tests.kexe               0x104996b6b        kfun:kotlinx.coroutines.TimeoutCancellationException#<init>(kotlin.String;kotlinx.coroutines.Job?){} + 47 
+    at 1   production-tests.kexe               0x104997bd3        kfun:kotlinx.coroutines#TimeoutCancellationException(kotlin.Long;kotlinx.coroutines.Delay;kotlinx.coroutines.Job;kotlin.String?){}kotlinx.coroutines.TimeoutCancellationException + 2039 
+    at 2   production-tests.kexe               0x104997157        kfun:kotlinx.coroutines.TimeoutCoroutine.run#internal + 391 
+    at 3   production-tests.kexe               0x1049e3c97        kfun:kotlinx.coroutines.WorkerDispatcher.WorkerDispatcher$schedule$DisposableBlock.$<bridge-DN>invoke(){}#internal + 339 
+    at 4   production-tests.kexe               0x104775f83        WorkerExecuteAfterLaunchpad + 287 
+    at 5   production-tests.kexe               0x104d8eed3        _ZN6Worker19processQueueElementEb + 1211 
+    at 6   production-tests.kexe               0x104d8e977        _ZN12_GLOBAL__N_113workerRoutineEPv + 119 
+    at 7   libsystem_pthread.dylib             0x19fc69cff        _pthread_start + 135 
+    at 8   libsystem_pthread.dylib             0x19fc64ceb        thread_start + 7 
+[  FAILED  ] PagHttpServerTest.serveLoopback (900067 ms)
+[----------] 1 tests from PagHttpServerTest (900075 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 tests from 1 test cases ran. (900076 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] PagHttpServerTest.serveLoopback
+
+1 FAILED TEST

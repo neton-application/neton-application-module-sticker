@@ -1,0 +1,162 @@
+
+> Configure project :geolite4k
+w: [33m[1m⚠️ Native task 'macosX64Test' is disabled[0m[0m
+Task 'macosX64Test' for target 'macos_x64' cannot run on the current host (macos_arm64).
+Reason: tests can only run on macos_x64
+[32m[1mSolution:[0m[0m
+[32m[3mTo suppress this warning, add 'kotlin.native.ignoreDisabledTargets=true' to gradle.properties.[0m[0m
+
+w: [33m[1m⚠️ Native task 'linuxX64Test' is disabled[0m[0m
+Task 'linuxX64Test' for target 'linux_x64' cannot run on the current host (macos_arm64).
+Reason: tests can only run on linux_x64
+[32m[1mSolution:[0m[0m
+[32m[3mTo suppress this warning, add 'kotlin.native.ignoreDisabledTargets=true' to gradle.properties.[0m[0m
+
+w: [33m[1m⚠️ Native task 'mingwX64Test' is disabled[0m[0m
+Task 'mingwX64Test' for target 'mingw_x64' cannot run on the current host (macos_arm64).
+Reason: tests can only run on mingw_x64
+[32m[1mSolution:[0m[0m
+[32m[3mTo suppress this warning, add 'kotlin.native.ignoreDisabledTargets=true' to gradle.properties.[0m[0m
+
+
+> Configure project :neton-application-contract
+w: [33m[1m⚠️ Native task 'linuxX64Test' is disabled[0m[0m
+Task 'linuxX64Test' for target 'linux_x64' cannot run on the current host (macos_arm64).
+Reason: tests can only run on linux_x64
+[32m[1mSolution:[0m[0m
+[32m[3mTo suppress this warning, add 'kotlin.native.ignoreDisabledTargets=true' to gradle.properties.[0m[0m
+
+w: [33m[1m⚠️ Native task 'mingwX64Test' is disabled[0m[0m
+Task 'mingwX64Test' for target 'mingw_x64' cannot run on the current host (macos_arm64).
+Reason: tests can only run on mingw_x64
+[32m[1mSolution:[0m[0m
+[32m[3mTo suppress this warning, add 'kotlin.native.ignoreDisabledTargets=true' to gradle.properties.[0m[0m
+
+
+> Task :module-account:kmpPartiallyResolvedDependenciesChecker
+> Task :module-account:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :module-account:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :module-account:generateMigrationResources UP-TO-DATE
+> Task :module-infra:kmpPartiallyResolvedDependenciesChecker
+> Task :module-infra:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :module-infra:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :module-infra:generateMigrationResources UP-TO-DATE
+> Task :module-system:kmpPartiallyResolvedDependenciesChecker
+> Task :module-system:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :module-system:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :module-system:generateMigrationResources UP-TO-DATE
+> Task :module-system:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :module-infra:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :module-account:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :module-sticker:kmpPartiallyResolvedDependenciesChecker
+> Task :module-sticker:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :module-sticker:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :module-sticker:generateMigrationResources UP-TO-DATE
+> Task :neton:neton-ksp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :tls:tls:kmpPartiallyResolvedDependenciesChecker
+> Task :tls:tls:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :tls:tls:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :tls:tls:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton-application-contract:kmpPartiallyResolvedDependenciesChecker
+> Task :neton-application-contract:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton-application-contract:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :neton-application-contract:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :geolite4k:kmpPartiallyResolvedDependenciesChecker
+> Task :geolite4k:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :geolite4k:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :geolite4k:compileKotlinMacosArm64 UP-TO-DATE
+> Task :geolite4k:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :http:http:kmpPartiallyResolvedDependenciesChecker
+> Task :http:http:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :http:http:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :http:http:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-ksp:compileKotlin UP-TO-DATE
+> Task :neton:neton-ksp:compileJava NO-SOURCE
+> Task :neton:neton-ksp:processResources UP-TO-DATE
+> Task :neton:neton-ksp:classes UP-TO-DATE
+> Task :neton:neton-ksp:jar UP-TO-DATE
+> Task :neton:neton-logging:kmpPartiallyResolvedDependenciesChecker
+> Task :neton:neton-logging:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton:neton-logging:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :neton:neton-logging:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-core:compilePosixEnvMacosArm64 UP-TO-DATE
+> Task :neton:neton-core:archivePosixEnvMacosArm64 UP-TO-DATE
+> Task :neton:neton-core:writePosixenvDefMacosArm64 UP-TO-DATE
+> Task :neton:neton-core:cinteropPosixenvMacosArm64 UP-TO-DATE
+> Task :neton:neton-core:kmpPartiallyResolvedDependenciesChecker
+> Task :neton:neton-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton:neton-core:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :neton:neton-core:generateBuildInfo UP-TO-DATE
+> Task :neton:neton-core:kspKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-logging:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-core:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-core:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-redis:kmpPartiallyResolvedDependenciesChecker
+> Task :neton:neton-redis:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton:neton-redis:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :module-sticker:cinteropPagprocessMacosArm64 UP-TO-DATE
+> Task :io:io:cinteropPosixshimMacosArm64 UP-TO-DATE
+> Task :io:io:kmpPartiallyResolvedDependenciesChecker
+> Task :io:io:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :io:io:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :io:io:compileKotlinMacosArm64 UP-TO-DATE
+> Task :io:io:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-redis:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-cache:kmpPartiallyResolvedDependenciesChecker
+> Task :neton:neton-cache:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton:neton-cache:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :neton:neton-redis:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-cache:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-validation:kmpPartiallyResolvedDependenciesChecker
+> Task :neton:neton-validation:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton:neton-validation:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :neton:neton-validation:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-database:kmpPartiallyResolvedDependenciesChecker
+> Task :neton:neton-database:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton:neton-database:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :http:http:compileKotlinMacosArm64 UP-TO-DATE
+> Task :tls:tls:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-database:kspKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-database:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-http:kmpPartiallyResolvedDependenciesChecker
+> Task :neton:neton-http:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton:neton-http:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :neton:neton-http:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-security:kmpPartiallyResolvedDependenciesChecker
+> Task :neton:neton-security:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton:neton-security:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :neton:neton-security:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-routing:kmpPartiallyResolvedDependenciesChecker
+> Task :neton:neton-routing:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton:neton-routing:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :neton:neton-routing:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-cache:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-validation:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-database:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-http:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-security:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-routing:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-jobs:kmpPartiallyResolvedDependenciesChecker
+> Task :neton:neton-jobs:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton:neton-jobs:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :neton:neton-jobs:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-storage:kmpPartiallyResolvedDependenciesChecker
+> Task :neton:neton-storage:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :neton:neton-storage:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :neton:neton-storage:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton:neton-jobs:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :neton:neton-storage:exportCrossCompilationMetadataForMacosArm64ApiElements UP-TO-DATE
+> Task :module-system:kspKotlinMacosArm64 UP-TO-DATE
+> Task :module-system:compileKotlinMacosArm64 UP-TO-DATE
+> Task :neton-application-contract:compileKotlinMacosArm64 UP-TO-DATE
+> Task :module-infra:kspKotlinMacosArm64 UP-TO-DATE
+> Task :module-infra:compileKotlinMacosArm64 UP-TO-DATE
+> Task :module-account:kspKotlinMacosArm64 UP-TO-DATE
+> Task :module-account:compileKotlinMacosArm64 UP-TO-DATE
+> Task :module-sticker:kspKotlinMacosArm64
+> Task :module-sticker:compileKotlinMacosArm64
+
+[Incubating] Problems report is available at: file:///Users/zoujiaqing/projects/privchat/privchat-application/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 3m 21s
+99 actionable tasks: 22 executed, 77 up-to-date

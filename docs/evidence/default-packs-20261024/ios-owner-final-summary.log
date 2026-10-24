@@ -1,0 +1,18 @@
+    t =    87.19s     Terminate com.netonstream.privchat.sticker-pack-ui-runtime:92778
+Test Case '-[StickerPackUiRuntimeTests.StickerPackUiRuntimeTests test08ReinstallDefaultAndMoveDown]' passed (88.515 seconds).
+Test Suite 'StickerPackUiRuntimeTests' passed at 2026-10-24 04:24:46.282.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 443.772 (443.812) seconds
+Test Suite 'StickerPackUiRuntimeTests.xctest' passed at 2026-10-24 04:24:46.293.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 443.772 (443.823) seconds
+Test Suite 'All tests' passed at 2026-10-24 04:24:46.293.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 443.772 (443.824) seconds
+2026-10-24 04:24:51.152 xcodebuild[86081:24594877] [MT] IDETestOperationsObserverDebug: 465.375 elapsed -- Testing started completed.
+2026-10-24 04:24:51.152 xcodebuild[86081:24594877] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-24 04:24:51.152 xcodebuild[86081:24594877] [MT] IDETestOperationsObserverDebug: 465.375 sec, +465.375 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/privchat-sticker-pack-ui-runtime/evidence/20261024-041704.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

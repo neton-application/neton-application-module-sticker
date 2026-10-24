@@ -1,0 +1,9 @@
+       relation       | count 
+----------------------+-------
+ sticker_authors      |     3
+ sticker_pag_links    |     5
+ chat_effect_versions |     5
+ chat_effect_rules    |     5
+ chat_effect_catalogs |     8
+(5 rows)
+

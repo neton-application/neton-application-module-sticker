@@ -1,0 +1,25 @@
+[package]
+name = "privchat-sticker"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Independent, local-only PrivChat sticker conversion and packaging tool"
+
+[workspace]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+image = { version = "=0.25.10", default-features = false, features = ["png", "gif", "webp"] }
+zip = { version = "=2.4.2", default-features = false, features = ["deflate-flate2", "flate2"] }
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+tempfile = "3"
+sha2 = "0.10"
+
+[profile.dev]
+debug = 0
+incremental = false
+
+[profile.test]
+debug = 0
+incremental = false

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "weey-kiss-sticker",
+    "kind": "sticker",
+    "keywords": [
+      "亲亲"
+    ],
+    "file": "weey-kiss-sticker.pag",
+    "fallback": "weey-kiss-sticker.png",
+    "sha256": "de75acba90ccf8479eb6a39048aa2e87452bcb00ffea06c4e458cf64f22ac3d9",
+    "fallback_sha256": "13e8ce6702c5729118195fbb370e5d9a997667f9ce48ebcf705908e469f6f140",
+    "bytes": 3998,
+    "fallback_bytes": 10311,
+    "width": 256,
+    "height": 256,
+    "fps": 30,
+    "frames": 72,
+    "duration_us": 2400000,
+    "shape_layers": 8,
+    "transparent": true,
+    "audio": false,
+    "video": false,
+    "image_layers": 0,
+    "text_layers": 0,
+    "playback_recommendation": "loop_while_visible",
+    "fallback_progress": 0.33,
+    "license": "MIT",
+    "attribution": "Weey / PrivChat contributors"
+  },
+  {
+    "id": "weey-kiss-effect",
+    "kind": "chat_effect",
+    "keywords": [
+      "亲亲"
+    ],
+    "file": "weey-kiss-effect.pag",
+    "fallback": "weey-kiss-effect.png",
+    "sha256": "a745e544a818ed5c3624a13a2d7fd8d3bfc7fb683c3bbe5c86f1734df2341050",
+    "fallback_sha256": "f9a6d980ac271e63b5b665e5dfcf37294c5b3d1d7ed362978bc3d190b867ade6",
+    "bytes": 15470,
+    "fallback_bytes": 50875,
+    "width": 720,
+    "height": 1280,
+    "fps": 30,
+    "frames": 120,
+    "duration_us": 4000000,
+    "shape_layers": 20,
+    "transparent": true,
+    "audio": false,
+    "video": false,
+    "image_layers": 0,
+    "text_layers": 0,
+    "playback_recommendation": "once",
+    "fallback_progress": 0.33,
+    "license": "MIT",
+    "attribution": "Weey / PrivChat contributors"
+  }
+]

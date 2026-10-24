@@ -4,6 +4,12 @@ PLATFORM-owned sticker catalog and administration module. The paired management
 UI is `privchat-application-front-sticker`. This module does not add customer
 uploads or change the IM message protocol (type 6, `sticker_id` + `image_url`).
 
+Independent packs now expose cover URLs and a draft-editable default-install
+flag. V004 preserves explicit per-account uninstalls as tombstones; it does not
+seed Apple assets or turn packs into emoji categories. See
+[API contract](docs/API.md#independent-packs-and-default-installation) and
+[disposable PG/socket acceptance](docs/DEFAULT_PACK_ACCEPTANCE.md).
+
 ## Scope
 
 - Admin realm: authors, localized pack metadata, ZIP import, single-image pack
@@ -16,6 +22,28 @@ uploads or change the IM message protocol (type 6, `sticker_id` + `image_url`).
 
 Exact DTOs, permissions, safety limits and retry behavior: [API contract](docs/API.md).
 Product baseline: `privchat-docs/spec/features/sticker/STICKER_PACK_SPEC.md`.
+
+## Sticker Format v1
+
+New uploads have width and height independently bounded to 1..512 pixels, not
+an exact 512x512 canvas. Preserve rectangles and original small dimensions; do
+not stretch, upscale or pad to a square. Static PNG/WebP and Animated WebP are
+accepted, each at most 500 KiB (512,000 bytes). Static 100 KiB is a target, not a
+rejection threshold. Animation is bounded to a 3,000 ms cycle, 90 frames and
+integer frame durations of at least 34 ms. Existing immutable historical
+resources are still readable without being resubmitted to ingress validation.
+
+ZIP uses the existing flat `manifest.json` layout. `schema_version: 1` identifies
+the format; omission remains compatible with old v1 manifests. Content
+`version` and immutable resource IDs are separate identities. All files,
+including covers, pass the same ingress checks as single-image creation.
+
+The independent Rust [sticker tool](tools/sticker-tool/README.md) prepares and
+validates assets outside the mobile clients. It does not open consumer uploads,
+publish drafts, grant asset redistribution rights or install additional codecs
+in the app. Optional source adapters must report missing capabilities rather
+than substituting a still frame for an animation. Production distribution still
+requires rights/source records and any required user-visible attribution.
 
 ## Host integration
 

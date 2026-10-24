@@ -1,0 +1,3 @@
+language = C
+headers = pagprocess.h
+package = sticker.process

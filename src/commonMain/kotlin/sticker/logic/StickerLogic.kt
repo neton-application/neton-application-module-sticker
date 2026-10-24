@@ -15,8 +15,11 @@ import sticker.table.StickerTable
 import kotlin.random.Random
 import kotlin.time.Clock
 
-class StickerLogic(private val table: StickerTable, private val storageManager: StorageManager, private val publicBaseUrl: String) {
+class StickerLogic(private val table: StickerTable, private val storageManager: StorageManager, private val publicBaseUrl: String, private val pagInspector: PagInspector = PagValidation.unavailable) {
     private val storage get() = storageManager.get("sticker-private").also { check(it.baseUrl.isBlank()) { "sticker-private must not have a public baseUrl" } }
+    private val delivery = StickerDelivery(table) { storage }
+    suspend fun archiveDescriptor(member: Long, id: String) = delivery.descriptor(member, id)
+    suspend fun archiveDownload(member: Long, id: String) = delivery.download(member, id)
     private fun now() = Clock.System.now().toEpochMilliseconds()
     private fun missing(): Nothing = throw NotFoundException("STICKER_NOT_FOUND")
     private fun digest(bytes: ByteArray) = CryptographyProvider.Default.get(SHA256).hasher().hashBlocking(bytes).joinToString("") { (it.toInt() and 255).toString(16).padStart(2,'0') }
@@ -55,9 +58,17 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
     private suspend fun packRow(id: String): Row = table.pack(StickerRules.id(id)) ?: missing()
     private suspend fun packDto(row: Row, admin: Boolean): PackDto {
         val entries=table.rows("SELECT r.*,e.key,e.emoji FROM sticker_entries e JOIN sticker_resources r ON r.id=e.resource_id WHERE e.pack_version_id=:id ORDER BY e.position","id" to row.long("id"))
-        return PackDto(row.long("id").toString(),row.string("pack_id"),Json.decodeFromString(row.string("name_json")),row.long("author_id").toString(),row.int("version"),row.int("publication_state"),entries.map { resourceDto(it,it.string("key"),it.string("emoji"),admin) },row.longOrNull("cover_id")?.toString(),row.long("created_at"))
+        val cover=row.longOrNull("cover_id")
+        return PackDto(row.long("id").toString(),row.string("pack_id"),Json.decodeFromString(row.string("name_json")),row.long("author_id").toString(),row.int("version"),row.int("publication_state"),entries.map { resourceDto(it,it.string("key"),it.string("emoji"),admin) },cover?.toString(),row.long("created_at"),cover?.let { if(admin) "/admin/sticker/resource/get/$it" else publicUrl(it) },row.int("default_install"),row.long("id").toString())
     }
-    private fun resourceDto(r: Row, key: String="", emoji: String="", admin: Boolean=false) = StickerDto(r.long("id").toString(),key,emoji,r.int("width"),r.int("height"),r.string("mime_type"),r.long("size"),if(admin) "/admin/sticker/resource/get/${r.long("id")}" else publicUrl(r.long("id")))
+    private suspend fun resourceDto(r: Row, key: String="", emoji: String="", admin: Boolean=false): StickerDto {
+        val pag = table.rows("SELECT r.* FROM sticker_pag_links l JOIN sticker_resources r ON r.id=l.pag_resource_id WHERE l.fallback_resource_id=:id AND r.ready=1" + (if(admin) "" else " AND r.ever_published=1"),"id" to r.long("id")).firstOrNull()
+        val descriptor = pag?.let {
+            val metadata=Json.decodeFromString<PagMetadata>(it.string("pag_metadata_json"))
+            PagDescriptor(it.long("id").toString(),if(admin) "/admin/sticker/resource/get/${it.long("id")}" else publicUrl(it.long("id")),it.string("digest"),it.long("size"),it.int("width"),it.int("height"),metadata.durationMs)
+        }
+        return StickerDto(r.long("id").toString(),key,emoji,r.int("width"),r.int("height"),r.string("mime_type"),r.long("size"),if(admin) "/admin/sticker/resource/get/${r.long("id")}" else publicUrl(r.long("id")),descriptor)
+    }
     suspend fun pack(id: String) = packDto(packRow(id),true)
     suspend fun packs(): List<PackDto> = table.rows("SELECT * FROM sticker_packs ORDER BY id DESC").map { packDto(it,true) }
     suspend fun packPage(page: Int,size: Int): PageResponse<PackDto> {
@@ -71,7 +82,7 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
         val id=if(update) {
             val row=packRow(p.id ?: ""); StickerRules.draft(row.int("publication_state"))
             StickerRules.check(row.string("pack_id")==p.packId && row.int("version")==p.version && row.long("author_id")==StickerRules.id(p.authorId),"immutable_pack_identity")
-            table.execute("UPDATE sticker_packs SET name_json=:name WHERE id=:id","name" to Json.encodeToString(p.name),"id" to row.long("id")); row.long("id")
+            table.execute("UPDATE sticker_packs SET name_json=:name,default_install=:default WHERE id=:id","name" to Json.encodeToString(p.name),"default" to p.defaultInstall,"id" to row.long("id")); row.long("id")
         } else {
             StickerRules.check(p.id==null,"unexpected_id"); checkVersion(p); insertPack(p,actor,"manual","")
         }
@@ -83,10 +94,11 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
         val owner=table.rows("SELECT author_id FROM sticker_packs WHERE pack_id=:pack LIMIT 1","pack" to p.packId).firstOrNull()
         StickerRules.check(owner==null || owner.long("author_id")==StickerRules.id(p.authorId),"pack_author_conflict")
     }
-    private suspend fun insertPack(p: PackWrite,actor: Long,source: String,hash: String): Long = table.rows("INSERT INTO sticker_packs(pack_id,name_json,author_id,version,input_digest,source,operator_id,created_at) VALUES(:pack,:name,:author,:version,:hash,:source,:actor,:now) RETURNING id","pack" to p.packId,"name" to Json.encodeToString(p.name),"author" to StickerRules.id(p.authorId),"version" to p.version,"hash" to hash,"source" to source,"actor" to actor,"now" to now()).single().long("id")
+    private suspend fun insertPack(p: PackWrite,actor: Long,source: String,hash: String): Long = table.rows("INSERT INTO sticker_packs(pack_id,name_json,author_id,version,input_digest,source,operator_id,created_at,default_install) VALUES(:pack,:name,:author,:version,:hash,:source,:actor,:now,:default) RETURNING id","pack" to p.packId,"name" to Json.encodeToString(p.name),"author" to StickerRules.id(p.authorId),"version" to p.version,"hash" to hash,"source" to source,"actor" to actor,"now" to now(),"default" to p.defaultInstall).single().long("id")
     suspend fun deletePack(id: String): Boolean = table.db.transaction {
         val initial=packRow(id); table.lock("pack:${initial.string("pack_id")}")
         val row=packRow(id); StickerRules.draft(row.int("publication_state"))
+        table.execute("DELETE FROM sticker_pag_links WHERE fallback_resource_id IN (SELECT resource_id FROM sticker_entries WHERE pack_version_id=:id)","id" to row.long("id"))
         table.execute("DELETE FROM sticker_packs WHERE id=:id","id" to row.long("id"))==1L
     }
     suspend fun transition(id: String,target: Int): PackDto = table.db.transaction {
@@ -97,10 +109,11 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
             requireAuthor(row.long("author_id"))
             val newer=table.rows("SELECT id FROM sticker_packs WHERE pack_id=:pack AND version>:version AND publication_state IN (2,3) LIMIT 1","pack" to row.string("pack_id"),"version" to row.int("version"))
             StickerRules.check(newer.isEmpty(),"stale_version")
-            val resources=table.rows("SELECT r.* FROM sticker_resources r WHERE r.id=:cover OR r.id IN (SELECT resource_id FROM sticker_entries WHERE pack_version_id=:id)","cover" to row.longOrNull("cover_id"),"id" to row.long("id"))
+            val resources=table.rows("SELECT r.* FROM sticker_resources r WHERE r.id=:cover OR r.id IN (SELECT resource_id FROM sticker_entries WHERE pack_version_id=:id) OR r.id IN (SELECT l.pag_resource_id FROM sticker_pag_links l JOIN sticker_entries e ON e.resource_id=l.fallback_resource_id WHERE e.pack_version_id=:id)","cover" to row.longOrNull("cover_id"),"id" to row.long("id"))
             StickerRules.check(row.longOrNull("cover_id")!=null && resources.isNotEmpty(),"empty_pack")
             for(r in resources) StickerRules.check(r.int("ready")==1 && storage.exists(r.string("object_key")),"missing_resource")
-            table.execute("UPDATE sticker_resources SET ever_published=1 WHERE id=:cover OR id IN (SELECT resource_id FROM sticker_entries WHERE pack_version_id=:id)","cover" to row.longOrNull("cover_id"),"id" to row.long("id"))
+            delivery.freeze(row)
+            table.execute("UPDATE sticker_resources SET ever_published=1 WHERE id=:cover OR id IN (SELECT resource_id FROM sticker_entries WHERE pack_version_id=:id) OR id IN (SELECT l.pag_resource_id FROM sticker_pag_links l JOIN sticker_entries e ON e.resource_id=l.fallback_resource_id WHERE e.pack_version_id=:id)","cover" to row.longOrNull("cover_id"),"id" to row.long("id"))
             table.execute("UPDATE sticker_packs SET publication_state=3 WHERE pack_id=:pack AND publication_state=2","pack" to row.string("pack_id"))
         }
         table.execute("UPDATE sticker_packs SET publication_state=:state WHERE id=:id","state" to target,"id" to row.long("id"))
@@ -109,7 +122,13 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
     suspend fun importZip(bytes: ByteArray,authorId: String,actor: Long): PackDto {
         val bundle=StickerArchive.unpack(bytes); val m=bundle.manifest
         StickerRules.check(author(authorId).name==m.author,"manifest_author_mismatch")
-        return receive(PackWrite(m.packId,m.name,authorId,m.version),actor,"zip",digest(bytes),m.cover,m.stickers,bundle.images)
+        return receive(PackWrite(m.packId,m.name,authorId,m.version,defaultInstall=m.defaultInstall),actor,"zip",digest(bytes),m.cover,m.stickers,bundle.images)
+    }
+    suspend fun importZipV2(bytes: ByteArray,authorId: String,actor: Long): PackDto {
+        val bundle=StickerArchive.unpackV2(bytes,pagInspector); val m=bundle.manifest
+        StickerRules.check(author(authorId).name==m.author,"manifest_author_mismatch")
+        return receive(PackWrite(m.packId,m.name,authorId,m.version,defaultInstall=m.defaultInstall),actor,"zip-v2",digest(bytes),m.cover,
+            m.stickers.map { ManifestEntry(it.key,it.file,it.emoji,it.width,it.height) },bundle.images,bundle.pagLinks)
     }
     suspend fun make(bytes: ByteArray,p: PackWrite,key: String,actor: Long): PackDto {
         StickerRules.check(Regex("[A-Za-z0-9_-]{1,128}").matches(key),"invalid_key")
@@ -117,7 +136,7 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
         val hash=digest(bytes+Json.encodeToString(p.copy(id=null)).encodeToByteArray()+key.encodeToByteArray())
         return receive(p,actor,"single",hash,"image",listOf(ManifestEntry(key,"image","",image.width,image.height)),mapOf("image" to image))
     }
-    private suspend fun receive(p: PackWrite,actor: Long,source: String,hash: String,cover: String,entries: List<ManifestEntry>,images: Map<String,StickerArchive.Image>): PackDto {
+    private suspend fun receive(p: PackWrite,actor: Long,source: String,hash: String,cover: String,entries: List<ManifestEntry>,images: Map<String,StickerArchive.Image>,pagLinks: Map<String,String> = emptyMap()): PackDto {
         StickerRules.pack(p)
         val retry = table.db.transaction {
             table.lock("authors"); table.lock("pack:${p.packId}")
@@ -132,6 +151,8 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
             images.forEach { (name,img) ->
                 val nonce=Random.nextBytes(24).joinToString("") { (it.toInt() and 255).toString(16).padStart(2,'0') }
                 reservation[name]=table.rows("INSERT INTO sticker_resources(object_key,digest,mime_type,width,height,size,author_id,operator_id,created_at) VALUES(:path,:hash,:mime,:width,:height,:size,:author,:actor,:now) RETURNING id","path" to "platform/stickers/$nonce","hash" to digest(img.bytes),"mime" to img.mime,"width" to img.width,"height" to img.height,"size" to img.bytes.size.toLong(),"author" to StickerRules.id(p.authorId),"actor" to actor,"now" to now()).single().long("id")
+                img.pag?.let { table.execute("UPDATE sticker_resources SET pag_profile=:profile,pag_metadata_json=:metadata WHERE id=:id",
+                    "profile" to PagValidation.STICKER,"metadata" to Json.encodeToString(it),"id" to reservation.getValue(name)) }
             }
         }
         // Same lock as cleanup, including external writes. DB rollback does NOT roll back those writes.
@@ -155,6 +176,8 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
                 table.execute("UPDATE sticker_resources SET ready=1 WHERE id=:id","id" to id)
             }
             entries.forEachIndexed { index,e -> table.execute("INSERT INTO sticker_entries(pack_version_id,resource_id,key,emoji,position) VALUES(:pack,:resource,:key,:emoji,:position)","pack" to packId,"resource" to reservation.getValue(e.file),"key" to e.key,"emoji" to e.emoji,"position" to index) }
+            pagLinks.forEach { (fallback,pag) -> table.execute("INSERT INTO sticker_pag_links(fallback_resource_id,pag_resource_id) VALUES(:fallback,:pag)",
+                "fallback" to reservation.getValue(fallback),"pag" to reservation.getValue(pag)) }
             table.execute("UPDATE sticker_packs SET cover_id=:cover WHERE id=:id","cover" to reservation.getValue(cover),"id" to packId)
             Result.success(pack(packId.toString()))
         }
@@ -168,16 +191,17 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
             StickerRules.check(old.string("input_digest")==hash && old.long("author_id")==StickerRules.id(p.authorId),"version_conflict")
         } else {
             StickerRules.draft(old.int("publication_state"))
-            StickerRules.check(old.long("author_id")==StickerRules.id(p.authorId) && Json.decodeFromString<Map<String,String>>(old.string("name_json"))==p.name,"draft_metadata_mismatch")
+            StickerRules.check(old.long("author_id")==StickerRules.id(p.authorId) && Json.decodeFromString<Map<String,String>>(old.string("name_json"))==p.name && old.int("default_install")==p.defaultInstall,"draft_metadata_mismatch")
         }
         return old
     }
     private suspend fun deleteUnwrittenReservations(ids: Collection<Long>) {
         for(id in ids) table.execute("DELETE FROM sticker_resources WHERE id=:id AND ready=0 AND ever_published=0 AND NOT EXISTS(SELECT 1 FROM sticker_entries WHERE resource_id=:id) AND NOT EXISTS(SELECT 1 FROM sticker_packs WHERE cover_id=:id)","id" to id)
     }
-    suspend fun cleanup(): Int = table.db.transaction {
+    suspend fun cleanup(): Int = cleanupResources() + delivery.cleanup()
+    private suspend fun cleanupResources(): Int = table.db.transaction {
         table.lock("uploads")
-        val unused=table.rows("SELECT r.* FROM sticker_resources r WHERE r.ever_published=0 AND r.created_at<:cutoff AND NOT EXISTS(SELECT 1 FROM sticker_entries e WHERE e.resource_id=r.id) AND NOT EXISTS(SELECT 1 FROM sticker_packs p WHERE p.cover_id=r.id) ORDER BY r.id LIMIT 100","cutoff" to now()-86400000)
+        val unused=table.rows("SELECT r.* FROM sticker_resources r WHERE r.ever_published=0 AND r.created_at<:cutoff AND NOT EXISTS(SELECT 1 FROM sticker_entries e WHERE e.resource_id=r.id) AND NOT EXISTS(SELECT 1 FROM sticker_packs p WHERE p.cover_id=r.id) AND NOT EXISTS(SELECT 1 FROM sticker_pag_links l WHERE l.fallback_resource_id=r.id OR l.pag_resource_id=r.id) ORDER BY r.id LIMIT 100","cutoff" to now()-86400000)
         for(r in unused) {
             if(storage.exists(r.string("object_key"))) storage.delete(r.string("object_key"))
             table.execute("DELETE FROM sticker_resources WHERE id=:id","id" to r.long("id"))
@@ -187,6 +211,7 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
     suspend fun resolve(id: String): StickerDto {
         val r=table.resource(StickerRules.id(id)) ?: missing()
         if(r.int("ever_published")!=1 || r.int("ready")!=1) missing()
+        if(r.stringOrNull("pag_profile")!=null) missing()
         return resourceDto(r)
     }
     suspend fun bytes(id: String,admin: Boolean): Pair<ByteArray,String> {
@@ -195,19 +220,34 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
         return storage.read(r.string("object_key")) to r.string("mime_type")
     }
     suspend fun store(): List<PackDto> = table.rows("SELECT * FROM sticker_packs WHERE publication_state=2 ORDER BY id DESC").map { packDto(it,false) }
-    suspend fun installed(member: Long): List<PackDto> = table.rows("SELECT p.* FROM sticker_installs i JOIN sticker_packs p ON p.pack_id=i.pack_id WHERE i.member_id=:member AND p.version=(SELECT MAX(p2.version) FROM sticker_packs p2 WHERE p2.pack_id=i.pack_id AND p2.publication_state IN (2,3)) ORDER BY i.position,i.id","member" to member).map { packDto(it,false) }
-    suspend fun install(member: Long,key: String): Boolean = table.db.transaction {
+    // Call only under the account lock, in the same transaction as every install/order decision.
+    // A row with status=0 is an explicit opt-out and must never be overwritten by defaults.
+    private suspend fun initializeDefaults(member: Long) {
+        table.execute("INSERT INTO sticker_installs(member_id,pack_id,position,installed_at,status) SELECT :member,p.pack_id,(SELECT COALESCE(MAX(position),-1) FROM sticker_installs WHERE member_id=:member AND status=1)+ROW_NUMBER() OVER(ORDER BY p.id),:now,1 FROM sticker_packs p WHERE p.publication_state=2 AND p.default_install=1 AND NOT EXISTS(SELECT 1 FROM sticker_installs i WHERE i.member_id=:member AND i.pack_id=p.pack_id) ON CONFLICT(member_id,pack_id) DO NOTHING","member" to member,"now" to now())
+    }
+    suspend fun installed(member: Long): List<PackDto> = table.db.transaction {
+        table.lock("member:$member"); initializeDefaults(member)
+        table.rows("SELECT p.* FROM sticker_installs i JOIN sticker_packs p ON p.pack_id=i.pack_id WHERE i.member_id=:member AND i.status=1 AND p.version=(SELECT MAX(p2.version) FROM sticker_packs p2 WHERE p2.pack_id=i.pack_id AND p2.publication_state IN (2,3)) ORDER BY i.position,i.id","member" to member).map { packDto(it,false) }
+    }
+    suspend fun install(member: Long,key: String,versionRowId: String? = null): Boolean = table.db.transaction {
         table.lock("member:$member"); table.lock("pack:$key")
-        StickerRules.check(table.rows("SELECT id FROM sticker_packs WHERE pack_id=:pack AND publication_state=2","pack" to key).isNotEmpty(),"pack_unavailable")
-        table.execute("INSERT INTO sticker_installs(member_id,pack_id,position,installed_at) SELECT :member,:pack,COALESCE(MAX(position),-1)+1,:now FROM sticker_installs WHERE member_id=:member ON CONFLICT(member_id,pack_id) DO NOTHING","member" to member,"pack" to key,"now" to now()); true
+        val current = table.rows("SELECT id FROM sticker_packs WHERE pack_id=:pack AND publication_state=2","pack" to key).firstOrNull()
+        if (versionRowId != null) StickerRules.check(current?.long("id") == StickerRules.id(versionRowId), "version_changed")
+        StickerRules.check(current != null,"pack_unavailable")
+        initializeDefaults(member)
+        table.execute("INSERT INTO sticker_installs(member_id,pack_id,position,installed_at,status) SELECT :member,:pack,COALESCE(MAX(position),-1)+1,:now,1 FROM sticker_installs WHERE member_id=:member AND status=1 ON CONFLICT(member_id,pack_id) DO UPDATE SET status=1,position=EXCLUDED.position,installed_at=EXCLUDED.installed_at WHERE sticker_installs.status=0","member" to member,"pack" to key,"now" to now()); true
     }
     suspend fun uninstall(member: Long,key: String): Boolean = table.db.transaction {
-        table.lock("member:$member"); table.execute("DELETE FROM sticker_installs WHERE member_id=:member AND pack_id=:pack","member" to member,"pack" to key); true
+        table.lock("member:$member")
+        StickerRules.check(Regex("[A-Za-z0-9_-]{1,128}").matches(key),"invalid_pack_id")
+        initializeDefaults(member)
+        table.execute("INSERT INTO sticker_installs(member_id,pack_id,position,installed_at,status) VALUES(:member,:pack,0,:now,0) ON CONFLICT(member_id,pack_id) DO UPDATE SET status=0","member" to member,"pack" to key,"now" to now()); true
     }
     suspend fun reorder(member: Long,keys: List<String>): Boolean = table.db.transaction {
         table.lock("member:$member")
-        val current=table.rows("SELECT pack_id FROM sticker_installs WHERE member_id=:member","member" to member).map { it.string("pack_id") }.toSet()
+        initializeDefaults(member)
+        val current=table.rows("SELECT pack_id FROM sticker_installs WHERE member_id=:member AND status=1","member" to member).map { it.string("pack_id") }.toSet()
         StickerRules.check(keys.size==keys.toSet().size && keys.toSet()==current,"invalid_install_order")
-        keys.forEachIndexed { index,key -> table.execute("UPDATE sticker_installs SET position=:position WHERE member_id=:member AND pack_id=:pack","position" to index,"member" to member,"pack" to key) }; true
+        keys.forEachIndexed { index,key -> table.execute("UPDATE sticker_installs SET position=:position WHERE member_id=:member AND pack_id=:pack AND status=1","position" to index,"member" to member,"pack" to key) }; true
     }
 }

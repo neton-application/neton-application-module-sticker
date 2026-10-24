@@ -1,0 +1,14 @@
+{
+  "marker": "STICKER_21_PACK_API_EXECUTED",
+  "packs": 21,
+  "uniqueStickers": 3953,
+  "defaultPack": "apple-smileys-emotion",
+  "defaultStickers": 171,
+  "accountAUninstallPersists": true,
+  "accountBIndependent": true,
+  "usedOnlyReservedBackendAccounts": [
+    9191,
+    9192
+  ],
+  "iosAccountIndicesUntouched": true
+}

@@ -35,8 +35,15 @@ class StickerPackController(private val logic: StickerLogic) {
         val data=upload(request,StickerRules.MAX_IMAGE)
         val f=request.form()
         val names=try { Json.decodeFromString<Map<String,String>>(f["name"] ?: "") } catch (_: kotlinx.serialization.SerializationException) { throw BadRequestException("STICKER_INVALID_NAME") }
-        val p=PackWrite(f["packId"] ?: "",names,f["authorId"] ?: "",f["version"]?.toIntOrNull() ?: 0)
+        val defaultInstall=f["defaultInstall"]?.let { it.toIntOrNull() ?: throw BadRequestException("STICKER_INVALID_DEFAULT_INSTALL") } ?: 0
+        val p=PackWrite(f["packId"] ?: "",names,f["authorId"] ?: "",f["version"]?.toIntOrNull() ?: 0,defaultInstall=defaultInstall)
         return logic.make(data,p,f["key"] ?: "",StickerRules.id(identity.id))
+    }
+    @Post("/import-v2") @Permission("sticker:pack:import")
+    suspend fun importV2(request: HttpRequest,identity: Identity): PackDto {
+        val data=upload(request,StickerRules.MAX_PACKAGE)
+        val author=request.form()["authorId"] ?: throw BadRequestException("STICKER_AUTHOR_REQUIRED")
+        return logic.importZipV2(data,author,StickerRules.id(identity.id))
     }
     private suspend fun upload(request: HttpRequest,limit: Int): ByteArray {
         StickerRules.check(request.isMultipart(),"multipart_required")

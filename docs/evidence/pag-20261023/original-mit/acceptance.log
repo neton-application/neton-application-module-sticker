@@ -1,0 +1,17 @@
+[==========] Running 2 tests from 8 test cases.
+[----------] Global test environment set-up.
+[----------] 1 tests from EffectPostgresTest
+[ RUN      ] EffectPostgresTest.officialPagAndPublishedRuleSnapshots
+CHAT_EFFECT_POSTGRES_EXECUTED: official libpag + real PG/storage + rights + rule versions + atomic snapshots + revocation
+[       OK ] EffectPostgresTest.officialPagAndPublishedRuleSnapshots (338 ms)
+[----------] 1 tests from EffectPostgresTest (338 ms total)
+
+[----------] 1 tests from StickerPagPostgresTest
+[ RUN      ] StickerPagPostgresTest.officialPagImportPublicationAndHistoricalFallback
+STICKER_PAG_POSTGRES_EXECUTED: official libpag + real PG/storage + immutable fallback/PAG + legacy 513px publish/read
+[       OK ] StickerPagPostgresTest.officialPagImportPublicationAndHistoricalFallback (250 ms)
+[----------] 1 tests from StickerPagPostgresTest (250 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 2 test cases ran. (588 ms total)
+[  PASSED  ] 2 tests.

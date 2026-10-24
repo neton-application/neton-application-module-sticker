@@ -3,6 +3,47 @@
 PLATFORM only. Admin realm uses the existing system authenticator; no C-end write/upload APIs.
 JSON IDs are decimal strings. Standard host response envelope applies. All paths below include route group.
 
+## Independent Packs and Default Installation
+
+`PackDto` appends `coverImageUrl: String? = null` and `defaultInstall: Int = 0`.
+Both fields are emitted explicitly. `coverId`, pack database `id`, stable
+`packId`, `version`, sticker IDs/keys and historical URLs are unchanged. Each
+pack is independently listed/installed/uninstalled/reordered; these are not
+emoji categories. The 256-sticker pack limit is unchanged. Generated Apple
+resources are ordinary v1 PNG packs, not backend hardcoded/seeded keywords.
+
+- Admin cover URL is `/admin/sticker/resource/get/{coverId}`; use the existing
+  authenticated private-image fetch. Never add tokens to URLs.
+- Store/installed covers use the same absolute public resource route as sticker
+  images. Existing ready/ever-published access checks and immutable bytes apply.
+- `PackWrite.defaultInstall` and `/pack/make` multipart `defaultInstall` are
+  optional integers defaulting to 0. Only 0/1 is valid; booleans/invalid text fail.
+- v1 and v2 manifest `default_install` is optional, integer 0/1, omitted means 0.
+  Import reads policy only from the manifest, never a multipart override.
+  Filling an empty manual draft requires policy, name and author to match.
+- Admin policy edits are draft-only, then published through the existing action.
+  Published/offline metadata is not rewritten; publish a new version instead.
+- `/app/sticker/store` lists published packs with cover/default metadata but
+  does not install on the caller's behalf.
+- `/app/sticker/installed` initializes published default packs under the existing
+  per-account advisory transaction lock. It only inserts when that account has
+  no prior install decision for the stable packId. Defaults published later can
+  initialize existing accounts on their next installed/install/order operation.
+- Uninstall persists `sticker_installs.status=0`; reads, new tokens, account
+  switches, and new versions do not resurrect that pack for that account.
+  Explicit install sets status=1 and appends to the active order. Repeating an
+  active install does not move it. No account identifier is accepted from callers.
+- Reorder requires exactly all current active packIds with no duplicates,
+  excluding tombstones. Installed offline packs retain the previous visibility
+  policy; uninstall/offline never invalidates published message resources.
+
+Apply new V004 through normal migrations before starting the updated module.
+Existing pack rows default to opt-in-only (0), existing install rows stay active
+(1). Pre-V004 physical deletions cannot retrospectively be reconstructed as
+opt-outs. There is no startup DDL and no default-pack asset seed migration.
+
+Disposable real PG/socket harness and commands: [default-pack acceptance](DEFAULT_PACK_ACCEPTANCE.md).
+
 Admin /admin/sticker/author:
 - GET /page?pageNo=1&pageSize=20 -> PageResponse<AuthorDto> {list,total,page,size,totalPages}
 - GET /list, /simple-list -> AuthorDto[]; GET /get/{id} -> AuthorDto
@@ -18,8 +59,8 @@ Admin /admin/sticker/pack:
 - POST /publish, /offline {id:string} -> PackDto
 - POST /import multipart file (ZIP), authorId -> PackDto
 - POST /make multipart file (PNG/WebP), authorId, packId, name (JSON locale map), version, key -> PackDto
-PackWrite {id?:string,packId:string,name:Record<string,string>,authorId:string,version:number}.
-PackDto {id,packId,name,authorId,version,publicationState:1|2|3,stickers:StickerDto[],coverId:string|null,createdAt:number}.
+PackWrite {id?:string,packId:string,name:Record<string,string>,authorId:string,version:number,defaultInstall?:0|1}.
+PackDto {id,packId,name,authorId,version,publicationState:1|2|3,stickers:StickerDto[],coverId:string|null,createdAt:number,coverImageUrl:string|null,defaultInstall:0|1}.
 StickerDto {stickerId:string,key:string,emoji:string,width:number,height:number,mimeType:string,size:number,imageUrl:string}.
 Permissions sticker:pack:query/create/update/delete/publish/offline/import/make. Asset preview uses query.
 GET /admin/sticker/resource/get/{id} returns authenticated bytes, never a public draft URL.
@@ -29,18 +70,56 @@ App /app/sticker: GET /store, /installed -> PackDto[]; POST /install,/uninstall 
 GET /resolve/{id} -> StickerDto; GET /resource/get/{id} -> anonymous read-only bytes for ever-published resources. Only ever-published resources resolve, including offline/old versions; install does not gate historical access.
 No legacy string ID migration is inferred.
 
-Implementation safety limits (not final product quotas): PNG/static and WebP, max image 500 KiB, max 256 stickers, ZIP and expanded package <32 MiB, max dimension 4096. APNG rejected. ZIP root manifest per product spec, stored/deflate entries, no directories/extra entries/encryption/ZIP64. Manifest author is descriptive; authorId is authoritative and display name must match.
+### Sticker v1 ingress limits
+
+All newly received images, including ZIP covers and sticker entries and `/pack/make` uploads, use the same bounded structural validator (not a full pixel decoder):
+- Static PNG and static WebP (lossy/lossless) remain supported; APNG is rejected.
+- Each image is at most 500 KiB (512000 bytes). Width and height must each be 1..512 pixels, inclusive. Rectangular images are accepted; square geometry is not required.
+- Animated WebP additionally allows at most 90 ANMF frames and at most 3000 ms summed ANMF duration per animation cycle. Each frame duration must be at least 34 integer milliseconds, enforcing <=30 fps without rounding. These limits apply together: 89 frames already need at least 3026 ms, so at most 88 minimum-duration frames fit the duration budget. Loop metadata does not multiply the per-cycle duration.
+- Malformed/truncated chunks, missing frame data, out-of-canvas frames and mismatched bitstream dimensions are rejected. Existing compressed-work and compositing-work safeguards remain.
+- Max 256 stickers; ZIP and expanded package each <32 MiB. Existing ZIP protections remain: root files only, stored/deflate entries, no duplicate/extra entries, encryption or ZIP64; CRC, local/central record consistency, non-overlapping ranges and compressed/expanded work budgets are checked.
+
+ZIP `manifest.json` fields are `{schema_version?:1,pack_id,name,author,version,cover,stickers:[{key,file,emoji?,width,height}]}`. Omitted `schema_version` defaults to 1 for legacy packages; any other integer version is rejected with `STICKER_UNSUPPORTED_SCHEMA_VERSION`. Invalid field types are rejected as an invalid manifest. `schema_version` is independent of the pack's positive release `version`. Manifest author is descriptive; authorId is authoritative and display name must match.
+
+These are ingress-only limits: historical catalog, resolve and resource reads are not revalidated or rewritten. Publishing an already-stored legacy draft still checks resource readiness/existence, not the new ingress dimensions or animation budgets. Existing `key` values and immutable resource `stickerId` (`sticker_id` in messaging) identities are unchanged, including historical images larger than the new limits.
 Same complete import is idempotent by packId/version and input digest; different same-version input conflicts. Versions strictly increase. Published metadata/resources cannot be edited; create a new version. Offline cannot be republished; create a new version.
 
 Storage prerequisite: provision StorageManager source `sticker-private`, with NO public bucket access, static file mapping or baseUrl. Unpublished bytes are served through admin-authorized routes. DB rollback never undoes object writes. Upload reservations persist before writes and cleanup takes the same DB lock as attachment. Published objects are retained indefinitely by ordinary operations.
+
+## PAG Import v2 (Backend)
+
+`POST /admin/sticker/pack/import-v2` takes the same multipart `file` and `authorId` as v1 and requires the existing `sticker:pack:import` permission. This is an explicit v2 endpoint: `/import` continues to decode only the strict v1 DTO, rejecting PAG descriptors, unknown fields and extra ZIP files. No existing v1 JSON Schema was changed.
+
+Machine-readable contract: [sticker-manifest-v2.schema.json](sticker-manifest-v2.schema.json). Example v2 `manifest.json` (all other pack fields retain v1 meanings):
+
+```json
+{"schema_version":2,"pack_id":"hearts","name":{"en":"Hearts"},"author":"Licensed author","version":1,"cover":"cover.png","stickers":[{"key":"heart","file":"fallback.webp","width":244,"height":244,"pag":{"file":"heart.pag","profile":"pag-sticker-v1"}}]}
+```
+
+Every PAG entry requires a structurally validated **static** PNG/WebP fallback. Cover, fallback and PAG each independently count against the 500 KiB per-file ceiling and existing <32 MiB compressed/expanded ZIP budgets. v2 permits at most 514 root files (256 fallback + 256 PAG + cover + manifest); v1 remains at 258. No paths, undeclared files, missing references or unknown profiles are accepted. PAG canvas may differ from fallback canvas, but both are <=512 per axis. An animated WebP is not the required static fallback. Optional animated-only entries remain governed by the existing WebP validator.
+
+`StickerDto` adds `pag:null|{resourceId,url,sha256,size,width,height,durationMs,profile:"pag-sticker-v1"}`. Existing `stickerId`/`imageUrl` identify the fallback forever. PAG has a separate immutable resource ID and a frozen association, created in the attachment transaction. Both resources become public only when the pack publishes; `ready=1` and `ever_published=1` are required for anonymous bytes. Admin previews require `sticker:pack:query`. `/app/sticker/resolve/{id}` retains account-realm authentication and only accepts fallback IDs, never returns raw PAG as an old client's image. Update/offline preserve the old fallback and PAG bytes/association. Legacy draft publishing and historical reads are not revalidated against new limits.
+
+Apply **new** PostgreSQL `V003__pag_representations.sql` through normal embedded migrations before running this version; V001/V002 were not edited. It adds nullable PAG metadata and a distinct `sticker_pag_links` table. No startup DDL.
+
+### Official Inspector Port
+
+Optional module config key `pag_inspector_executable` is a fixed absolute path to the official libpag 4.5.98 CLI built by the native owner. Missing configuration/executable, nonzero exit, malformed/incomplete JSON, unsupported SDK/profile, failed parse or failed bounded render **rejects the upload before reservations/object writes**. No magic-header acceptance and no request-provided executable, command, local path, metadata or URL can replace inspection.
+
+Invocation is `CONFIGURED_ABSOLUTE_BINARY TEMP_FILE sticker`; no shell or PATH resolution. Child environment is limited to `PATH=/usr/bin:/bin` and `LANG=C`. Temporary files are mode 0600 and removed on completion/failure; wall timeout is 10s, child CPU 5s, output 16 KiB, core dumps disabled. This is process containment, not an OS network/RSS sandbox: production deployment must additionally isolate the inspector with a memory cap and no network. Do not configure an on-demand build wrapper as the production executable.
+
+The adapter consumes the native owner's actual `valid,sdkVersion,bytes,width,height,durationMs,frameRate,hasAudio,numVideos,numImages,numTexts,tagLevel,maxSupportedTagLevel,layerCount,maxDepth,truncated,sha256,profile,renderProbe,probeFrameMs,probeMaxFrameMs` JSON, plus the required codec inspection fields `codecParsed,codecHasAudio,codecLayerCount,codecTruncated,compositionBoundsValid,compositionCount,maxCompositionWidth,maxCompositionHeight,maxCompositionDurationMs,embeddedImageCount,imageLayerCount,textLayerCount,bitmapCompositions,videoCompositions`. Missing fields fail closed. Initial supported compositions are vector-only: no audio, video, embedded images or text/font dependencies; <=128 layers/compositions and depth <=8 (native zero-based depth). All nested compositions must also stay within the profile's axis/duration limits, not just the root canvas. This deliberately rejects data whose texture/font budgets the initial CLI cannot report. PAG timeline rate is 1..60 fps, separate from the WebP integer-ANMF rules. Sticker remains <=500 KiB, <=3000ms, <=512 per axis; effect is an independent profile/module.
+
+Three actual offscreen sample probes must succeed, with finite nonnegative durations <=250ms each (including cold setup), and required tag level must be supported by the pinned official parser. These conservative upload screening limits are not mobile frame-time/RSS acceptance. CLI/library checksums and deployment provenance remain operator responsibilities; a test implementation of the port is never installed by bootstrap.
 
 ## Host configuration and tests
 
 `config/sticker.conf`: `public_base_url` must be an absolute externally reachable API base URL, with any reverse-proxy prefix included, no trailing slash required. Published imageUrl is `${public_base_url}/app/sticker/resource/get/{id}` and requires NO token. The route checks `ready=1 AND ever_published=1`; resolving a draft returns not-found. Ordinary offline never revokes historical public images.
 Default Neton HTTP body limit is 16 MiB. Host adapter must allow 34 MiB bodies (ZIP + multipart overhead), and at least 68 MiB buffer budget. Reverse-proxy limits must agree. Module still enforces <32 MiB ZIP and expanded data limits.
-`pack/make` and `pack/import` can fill an existing EMPTY draft of the same packId/version only when authorId and names match; subsequent upload retry must match digest.
+`pack/make` and `pack/import` can fill an existing EMPTY draft of the same packId/version only when authorId, names and defaultInstall match; subsequent upload retry must match digest.
 
 Pure rules/auth boundary tests: from privchat-application, `./gradlew :module-sticker:macosArm64Test --max-workers=2`.
+Focused v1 archive/rules tests: `./gradlew :module-sticker:macosArm64Test --tests 'sticker.logic.StickerArchiveTest' --tests 'StickerRulesTest' -Pneton.database.driver=postgres --max-workers=1`. No database or HTTP host is started by these filtered tests.
 Real database test: explicitly set `STICKER_TEST_DATABASE_URI=postgresql://sticker_test:test@127.0.0.1:55473/sticker_test` and pass `-Pneton.database.driver=postgres`. Requires empty public sticker tables and uses production V001. It refuses to wipe preexisting tables, leaves fixtures for inspection, and uses `/tmp/sticker-integration-storage`. Absence of URI skips that test; only the `STICKER_POSTGRES_EXECUTED` marker proves execution. Shared realm tests are NOT full HTTP integration evidence.
 
 ## Acceptance evidence (2026-10-21)
@@ -64,3 +143,9 @@ The database lifecycle test also permits the isolated `sticker_test_lifecycle` d
 After rebuilding missing shared dependency klibs, the updated Native test linked successfully with one Gradle worker. The real PostgreSQL/local-StorageOperator lifecycle passed in the separate `sticker_test_immutable` database (also explicitly allowed by the test guard). This did not reset the shared HTTP/mobile database or restart its server.
 
 The same logical `smile` key now uses a valid 1x1 PNG in v1 and a different valid 16x16 PNG in v2. Assertions verify distinct resource IDs and expected SHA-256 digests, and read both original byte arrays after v2 publication, offline, and cleanup. The successful run emitted both `STICKER_IMMUTABLE_REPLACEMENT_EXECUTED` and `STICKER_POSTGRES_EXECUTED`. The database and objects are retained for inspection and eventual parent-task cleanup.
+
+## Whole-pack offline delivery
+
+See [immutable archive delivery v1](ARCHIVE_DELIVERY.md) for the authenticated
+version-row descriptor/download contract, install version guard, limits and
+immutable snapshot/storage lifecycle. Single-resource endpoints are unchanged.

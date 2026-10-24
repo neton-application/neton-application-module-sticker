@@ -1,0 +1,86 @@
+[==========] Running 33 tests from 7 test cases.
+[----------] Global test environment set-up.
+[----------] 2 tests from StickerRulesTest
+[ RUN      ] StickerRulesTest.publicationTransitionsAreClosed
+[       OK ] StickerRulesTest.publicationTransitionsAreClosed (0 ms)
+[ RUN      ] StickerRulesTest.identitiesAndNamesAreBounded
+[       OK ] StickerRulesTest.identitiesAndNamesAreBounded (0 ms)
+[----------] 2 tests from StickerRulesTest (1 ms total)
+
+[----------] 5 tests from sticker.logic.PagImportTest
+[ RUN      ] sticker.logic.PagImportTest.v1RemainsStrictAndV2PreservesFallbackIdentity
+[       OK ] sticker.logic.PagImportTest.v1RemainsStrictAndV2PreservesFallbackIdentity (1 ms)
+[ RUN      ] sticker.logic.PagImportTest.missingOfficialInspectorFailsClosed
+[       OK ] sticker.logic.PagImportTest.missingOfficialInspectorFailsClosed (0 ms)
+[ RUN      ] sticker.logic.PagImportTest.v2RejectsWrongSchemaUnknownFieldsAndProfile
+[       OK ] sticker.logic.PagImportTest.v2RejectsWrongSchemaUnknownFieldsAndProfile (0 ms)
+[ RUN      ] sticker.logic.PagImportTest.rejectsUnverifiedIncompleteAndOutOfBudgetMetadata
+[       OK ] sticker.logic.PagImportTest.rejectsUnverifiedIncompleteAndOutOfBudgetMetadata (4 ms)
+[ RUN      ] sticker.logic.PagImportTest.validatesSizeBeforeCallingInspectorAndKeepsProfilesDistinct
+[       OK ] sticker.logic.PagImportTest.validatesSizeBeforeCallingInspectorAndKeepsProfilesDistinct (5 ms)
+[----------] 5 tests from sticker.logic.PagImportTest (11 ms total)
+
+[----------] 21 tests from sticker.logic.StickerArchiveTest
+[ RUN      ] sticker.logic.StickerArchiveTest.acceptsStaticAndAnimatedHeaders
+[       OK ] sticker.logic.StickerArchiveTest.acceptsStaticAndAnimatedHeaders (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.rejectsOversizedBitstreamBehindSmallCanvas
+[       OK ] sticker.logic.StickerArchiveTest.rejectsOversizedBitstreamBehindSmallCanvas (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.rejectsFrameOutsideCanvasAndMismatchedBitstream
+[       OK ] sticker.logic.StickerArchiveTest.rejectsFrameOutsideCanvasAndMismatchedBitstream (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.rejectsMissingAndTruncatedFrameData
+[       OK ] sticker.logic.StickerArchiveTest.rejectsMissingAndTruncatedFrameData (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.rejectsAnimationOrderingAndDuplicateBitstreams
+[       OK ] sticker.logic.StickerArchiveTest.rejectsAnimationOrderingAndDuplicateBitstreams (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.enforcesAnimationTimingAndFrameLimits
+[       OK ] sticker.logic.StickerArchiveTest.enforcesAnimationTimingAndFrameLimits (3 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.rejectsMalformedAnimationHeadersAndFrames
+[       OK ] sticker.logic.StickerArchiveTest.rejectsMalformedAnimationHeadersAndFrames (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.checksPngHeaderCombinations
+[       OK ] sticker.logic.StickerArchiveTest.checksPngHeaderCombinations (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.acceptsRectangularGeometryAndRejects513OnEitherAxis
+[       OK ] sticker.logic.StickerArchiveTest.acceptsRectangularGeometryAndRejects513OnEitherAxis (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.enforcesExact500KiBImageLimit
+[       OK ] sticker.logic.StickerArchiveTest.enforcesExact500KiBImageLimit (3 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.acceptsLegacyAndExplicitSchemaV1WithoutChangingKeys
+[       OK ] sticker.logic.StickerArchiveTest.acceptsLegacyAndExplicitSchemaV1WithoutChangingKeys (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.rejectsUnsupportedAndMalformedSchemaVersions
+[       OK ] sticker.logic.StickerArchiveTest.rejectsUnsupportedAndMalformedSchemaVersions (1 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.zipImagesAndCoversUseTheSameIngressLimits
+[       OK ] sticker.logic.StickerArchiveTest.zipImagesAndCoversUseTheSameIngressLimits (1 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.zipStickerAndIndependentCoverEnforce500KiB
+[       OK ] sticker.logic.StickerArchiveTest.zipStickerAndIndependentCoverEnforce500KiB (49 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.acceptsStoredDeflatedAndDescriptorZips
+[       OK ] sticker.logic.StickerArchiveTest.acceptsStoredDeflatedAndDescriptorZips (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.rejectsUnsignedAndOverflowingOffsetsAsBadRequest
+[       OK ] sticker.logic.StickerArchiveTest.rejectsUnsignedAndOverflowingOffsetsAsBadRequest (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.rejectsOverlappingLocalRecordsBeforePayloadParsing
+[       OK ] sticker.logic.StickerArchiveTest.rejectsOverlappingLocalRecordsBeforePayloadParsing (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.rejectsCompressedWorkAmplificationBeforeInflating
+[       OK ] sticker.logic.StickerArchiveTest.rejectsCompressedWorkAmplificationBeforeInflating (530 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.rejectsStoredSizeMismatchBeforeCopying
+[       OK ] sticker.logic.StickerArchiveTest.rejectsStoredSizeMismatchBeforeCopying (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.rejectsTruncatedCentralDirectory
+[       OK ] sticker.logic.StickerArchiveTest.rejectsTruncatedCentralDirectory (0 ms)
+[ RUN      ] sticker.logic.StickerArchiveTest.inflateRejectsOversizedOutputTruncationAndTrailingData
+[       OK ] sticker.logic.StickerArchiveTest.inflateRejectsOversizedOutputTruncationAndTrailingData (3 ms)
+[----------] 21 tests from sticker.logic.StickerArchiveTest (600 ms total)
+
+[----------] 3 tests from sticker.logic.StickerDefaultContractTest
+[ RUN      ] sticker.logic.StickerDefaultContractTest.legacyWritesDefaultToOptInAndNewFlagsAreBounded
+[       OK ] sticker.logic.StickerDefaultContractTest.legacyWritesDefaultToOptInAndNewFlagsAreBounded (0 ms)
+[ RUN      ] sticker.logic.StickerDefaultContractTest.packWireHasExplicitCoverAndDefaultFlagWithoutRenamingIdentities
+[       OK ] sticker.logic.StickerDefaultContractTest.packWireHasExplicitCoverAndDefaultFlagWithoutRenamingIdentities (0 ms)
+[ RUN      ] sticker.logic.StickerDefaultContractTest.bothManifestVersionsAcceptOptionalSnakeCaseFlagOnly
+[       OK ] sticker.logic.StickerDefaultContractTest.bothManifestVersionsAcceptOptionalSnakeCaseFlagOnly (0 ms)
+[----------] 3 tests from sticker.logic.StickerDefaultContractTest (0 ms total)
+
+[----------] 2 tests from sticker.logic.ExternalPagInspectorTest
+[ RUN      ] sticker.logic.ExternalPagInspectorTest.fixedAbsoluteExecutableRequired
+[       OK ] sticker.logic.ExternalPagInspectorTest.fixedAbsoluteExecutableRequired (0 ms)
+[ RUN      ] sticker.logic.ExternalPagInspectorTest.unavailableNonzeroAndEmptyOutputNeverValidate
+[       OK ] sticker.logic.ExternalPagInspectorTest.unavailableNonzeroAndEmptyOutputNeverValidate (110 ms)
+[----------] 2 tests from sticker.logic.ExternalPagInspectorTest (110 ms total)
+
+[----------] Global test environment tear-down
+[==========] 33 tests from 5 test cases ran. (729 ms total)
+[  PASSED  ] 33 tests.

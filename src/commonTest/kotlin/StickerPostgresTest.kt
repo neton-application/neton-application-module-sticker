@@ -22,7 +22,7 @@ class StickerPostgresTest {
             val occupied=db.fetchAll("SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'sticker_%'")
             require(occupied.isEmpty()) { "Test requires an empty disposable schema; never wipes existing data" }
             // Production SQL, not a parallel SQLite/fake schema.
-            val sql=StickerMigrationResources.sources.single().scripts.single { it.description=="sticker" }.content
+            val sql=StickerMigrationResources.sources.single().scripts.filter { it.description!="menus" }.joinToString("\n") { it.content }
             val statements=mutableListOf<String>(); val current=StringBuilder(); var quoted=false
             sql.forEach { c -> if(c=='\'') quoted=!quoted; if(c==';' && !quoted) { statements+=current.toString(); current.clear() } else current.append(c) }
             if(current.isNotBlank()) statements+=current.toString()
