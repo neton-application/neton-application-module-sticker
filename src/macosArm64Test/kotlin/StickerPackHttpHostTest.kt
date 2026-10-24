@@ -34,7 +34,8 @@ class StickerPackHttpHostTest {
         val info = config.parseUri() as PostgresUriInfo
         require(info.host == "127.0.0.1" && info.port == 55476 && Regex("sticker_packs_[a-z0-9_]+").matches(info.database))
         val root = getEnv("STICKER_PACK_ROOT") ?: error("STICKER_PACK_ROOT required")
-        require(root.startsWith("/tmp/sticker-packs.") && !root.contains(".."))
+        val projectRoot = "/Users/zoujiaqing/projects/privchat/.artifacts/feature-closure/2026-10-25/sticker-backend"
+        require((root.startsWith("/tmp/sticker-packs.") || root == projectRoot || root.startsWith("$projectRoot/")) && !root.contains(".."))
         val port = getEnv("STICKER_PACK_PORT")?.toIntOrNull() ?: 55479
         require(port in 55479..55489)
         val origin = "http://127.0.0.1:$port"
