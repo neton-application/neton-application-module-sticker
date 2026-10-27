@@ -7,6 +7,26 @@ import sticker.logic.*
 
 @Controller("/sticker")
 class StickerAppController(private val logic: StickerLogic) {
+    @Get("/favorites") @RequireAuth
+    suspend fun favorites(identity: Identity, response: HttpResponse): List<StickerDto> {
+        response.header("Cache-Control", "private, no-store")
+        return logic.favorites(StickerRules.id(identity.id))
+    }
+    @Post("/favorite/add") @RequireAuth
+    suspend fun addFavorite(@Body body: FavoriteRequest, identity: Identity, response: HttpResponse): Boolean {
+        response.header("Cache-Control", "private, no-store")
+        return logic.addFavorite(StickerRules.id(identity.id), body.stickerId)
+    }
+    @Post("/favorite/remove") @RequireAuth
+    suspend fun removeFavorite(@Body body: FavoriteRequest, identity: Identity, response: HttpResponse): Boolean {
+        response.header("Cache-Control", "private, no-store")
+        return logic.removeFavorite(StickerRules.id(identity.id), body.stickerId)
+    }
+    @Get("/search") @RequireAuth
+    suspend fun search(@Query query: String = "", identity: Identity, response: HttpResponse): StickerSearchResult {
+        response.header("Cache-Control", "private, no-store")
+        return logic.search(StickerRules.id(identity.id), query)
+    }
     @Get("/store") @RequireAuth
     suspend fun store() = logic.store()
     @Get("/installed")

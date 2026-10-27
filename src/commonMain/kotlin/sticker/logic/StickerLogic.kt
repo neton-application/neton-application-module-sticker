@@ -220,6 +220,66 @@ class StickerLogic(private val table: StickerTable, private val storageManager: 
         return storage.read(r.string("object_key")) to r.string("mime_type")
     }
     suspend fun store(): List<PackDto> = table.rows("SELECT * FROM sticker_packs WHERE publication_state=2 ORDER BY id DESC").map { packDto(it,false) }
+    // Membership in an immutable published version excludes cover-only and raw PAG resources.
+    private val favoriteEntries = """
+        FROM sticker_entries e JOIN sticker_packs p ON p.id=e.pack_version_id
+        JOIN sticker_resources r ON r.id=e.resource_id
+        WHERE p.publication_state IN (2,3) AND r.ever_published=1 AND r.ready=1
+          AND r.pag_profile IS NULL AND r.mime_type IN ('image/png','image/webp')
+          AND r.width>0 AND r.height>0 AND r.size>0
+    """.trimIndent()
+
+    suspend fun favorites(member: Long): List<StickerDto> = table.rows("""
+        SELECT r.*,entry.key,entry.emoji FROM sticker_favorites f
+        JOIN sticker_resources r ON r.id=f.resource_id
+        JOIN LATERAL (SELECT e.key,e.emoji $favoriteEntries AND r.id=f.resource_id
+            ORDER BY p.version DESC,p.id DESC,e.position LIMIT 1) entry ON TRUE
+        WHERE f.member_id=:member ORDER BY f.created_at DESC,f.id DESC LIMIT :limit
+    """.trimIndent(), "member" to member, "limit" to StickerSearchRules.MAX_FAVORITES)
+        .map { resourceDto(it,it.string("key"),it.string("emoji")) }
+
+    suspend fun addFavorite(member: Long, id: String): Boolean = table.db.transaction {
+        val resource = StickerRules.id(id)
+        table.lock("member:$member")
+        if (table.rows("SELECT r.id $favoriteEntries AND r.id=:id LIMIT 1", "id" to resource).isEmpty()) missing()
+        val existing = table.rows("SELECT id FROM sticker_favorites WHERE member_id=:member AND resource_id=:id",
+            "member" to member, "id" to resource).isNotEmpty()
+        if (!existing) {
+            val count = table.rows("SELECT COUNT(*) AS n FROM sticker_favorites WHERE member_id=:member", "member" to member).single().long("n")
+            StickerRules.check(count < StickerSearchRules.MAX_FAVORITES, "favorite_limit")
+            table.execute("INSERT INTO sticker_favorites(member_id,resource_id,created_at) VALUES(:member,:id,:now) ON CONFLICT(member_id,resource_id) DO NOTHING",
+                "member" to member, "id" to resource, "now" to now())
+        }
+        true
+    }
+
+    suspend fun removeFavorite(member: Long, id: String): Boolean = table.db.transaction {
+        val resource = StickerRules.id(id)
+        table.lock("member:$member")
+        table.execute("DELETE FROM sticker_favorites WHERE member_id=:member AND resource_id=:id", "member" to member, "id" to resource)
+        true
+    }
+
+    suspend fun search(member: Long, query: String): StickerSearchResult {
+        val pattern = StickerSearchRules.pattern(query) ?: return StickerSearchResult(emptyList(), emptyList())
+        val packs = table.rows("""
+            SELECT p.* FROM sticker_packs p WHERE p.publication_state=2
+            AND (p.pack_id ILIKE :pattern ESCAPE '!' OR EXISTS (
+                SELECT 1 FROM jsonb_each_text(p.name_json::jsonb) n WHERE n.value ILIKE :pattern ESCAPE '!'))
+            ORDER BY p.default_install DESC,EXISTS (SELECT 1 FROM sticker_installs i
+                WHERE i.member_id=:member AND i.pack_id=p.pack_id AND i.status=1) DESC,p.id DESC LIMIT :limit
+        """.trimIndent(), "member" to member, "pattern" to pattern, "limit" to StickerSearchRules.MAX_PACKS).map { packDto(it,false) }
+        val stickers = table.rows("""
+            SELECT DISTINCT ON (r.id) r.*,e.key,e.emoji $favoriteEntries
+            AND (p.publication_state=2 OR EXISTS (SELECT 1 FROM sticker_favorites f WHERE f.member_id=:member AND f.resource_id=r.id))
+            AND (e.key ILIKE :pattern ESCAPE '!' OR e.emoji ILIKE :pattern ESCAPE '!'
+                OR p.pack_id ILIKE :pattern ESCAPE '!' OR EXISTS (
+                    SELECT 1 FROM jsonb_each_text(p.name_json::jsonb) n WHERE n.value ILIKE :pattern ESCAPE '!'))
+            ORDER BY r.id,p.version DESC,p.id DESC,e.position LIMIT :limit
+        """.trimIndent(), "member" to member, "pattern" to pattern, "limit" to StickerSearchRules.MAX_STICKERS)
+            .map { resourceDto(it,it.string("key"),it.string("emoji")) }
+        return StickerSearchResult(packs, stickers)
+    }
     // Call only under the account lock, in the same transaction as every install/order decision.
     // A row with status=0 is an explicit opt-out and must never be overwritten by defaults.
     private suspend fun initializeDefaults(member: Long) {

@@ -18,6 +18,8 @@ import kotlinx.serialization.SerialName
 @Serializable data class ManifestEntry(val key: String, val file: String, val emoji: String = "", val width: Int, val height: Int)
 @Serializable data class InstallRequest(val packId: String, val versionRowId: String? = null)
 @Serializable data class ReorderRequest(val packIds: List<String>)
+@Serializable data class FavoriteRequest(val stickerId: String)
+@Serializable data class StickerSearchResult(val packs: List<PackDto>, val stickers: List<StickerDto>)
 
 @Serializable data class ArchiveManifestFile(val file: String, val sha256: String, val size: Long)
 @Serializable data class ArchiveResourceFile(val resourceId: String, val file: String, val sha256: String, val size: Long, val kind: String, val mimeType: String)

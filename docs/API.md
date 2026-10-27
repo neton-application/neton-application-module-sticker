@@ -1,6 +1,6 @@
 # Sticker API v1 (implementation contract)
 
-PLATFORM only. Admin realm uses the existing system authenticator; no C-end write/upload APIs.
+PLATFORM only. Admin realm uses the existing system authenticator; no C-end resource upload APIs.
 JSON IDs are decimal strings. Standard host response envelope applies. All paths below include route group.
 
 ## Independent Packs and Default Installation
@@ -149,3 +149,35 @@ The same logical `smile` key now uses a valid 1x1 PNG in v1 and a different vali
 See [immutable archive delivery v1](ARCHIVE_DELIVERY.md) for the authenticated
 version-row descriptor/download contract, install version guard, limits and
 immutable snapshot/storage lifecycle. Single-resource endpoints are unchanged.
+## Account Favorites And Search
+
+All routes below use the account access-token realm at `/app/sticker` (not admin
+or refresh tokens). Member identity comes only from the authenticated principal.
+Responses are `private, no-store` and use the existing `{code,data,message}` envelope.
+
+- `GET /app/sticker/favorites`: `StickerDto[]`, newest favorite first.
+- `POST /app/sticker/favorite/add`: body `{ "stickerId": "123" }`, returns `true`.
+- `POST /app/sticker/favorite/remove`: same body, returns `true`, including absent rows.
+- `GET /app/sticker/search?query=smile`: `{ "packs": PackDto[], "stickers": StickerDto[] }`.
+
+Favorites persist independently of pack installation and default-install opt-outs.
+Duplicate/concurrent adds are idempotent and do not change ordering. Each account
+may keep at most 1000 favorites; an existing favorite can still be added at capacity.
+Only ready PNG/WebP sticker entries from published immutable versions are eligible;
+delisted history is eligible, but drafts, cover-only resources, raw PAG resources,
+missing resources and C-end uploads are not. PAG links remain optional representations
+of the immutable fallback sticker ID. Favorites never grant upload capability.
+
+Search accepts at most 128 characters, rejects control characters below U+0020,
+trims outer spaces, and returns empty lists for an empty query. Matching is
+case-insensitive literal substring matching on pack ID, localized name values,
+sticker key and emoji. `%`, `_` and `!` are literals, not wildcard operators.
+There is no English semantic expansion for Unicode emoji labels. Results contain
+at most 20 currently published packs and 100 distinct sticker IDs. Individual
+stickers are currently published or favorited by this account in delisted history;
+another account's favorites never broaden visibility. Matching published packs sort
+default first, then this account's active installations, then newest first;
+individual stickers sort by immutable resource ID. IDs stay strings.
+
+Apply `V006__sticker_favorites.sql` through the versioned module migration system
+before serving these endpoints; normal request/startup paths never perform DDL.

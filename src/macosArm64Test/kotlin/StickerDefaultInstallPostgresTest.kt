@@ -78,6 +78,54 @@ class StickerDefaultInstallPostgresTest {
             assertEquals(objects.stickers.single().stickerId, service.resolve(objects.stickers.single().stickerId).stickerId)
             coroutineScope { List(4) { async(Dispatchers.Default) { logic().installed(9203) } }.awaitAll() }
             assertEquals(1L, db.fetchAll("SELECT COUNT(*) AS n FROM sticker_installs WHERE member_id=9203").single().long("n"))
+            // Persistent resource favorites are separate from pack installation/default opt-outs.
+            val animalId = animals.stickers.single().stickerId
+            assertTrue(logic().favorites(9201).isEmpty())
+            assertTrue(service.addFavorite(9201, animalId), "delisted history is still a valid favorite")
+            coroutineScope { List(4) { async(Dispatchers.Default) { logic().addFavorite(9201, animalId) } }.awaitAll() }
+            assertEquals(listOf(animalId), logic().favorites(9201).map { it.stickerId })
+            assertTrue(logic().favorites(9202).isEmpty())
+            assertEquals(1L, db.fetchAll("SELECT COUNT(*) AS n FROM sticker_favorites WHERE member_id=9201").single().long("n"))
+            assertEquals(listOf(animalId), logic().search(9201, "animals").stickers.map { it.stickerId })
+            assertTrue(logic().search(9201, "animals").packs.isEmpty())
+            assertTrue(logic().search(9202, "animals").stickers.isEmpty(), "another account cannot search a private historical favorite")
+            assertTrue(service.removeFavorite(9202, animalId))
+            assertEquals(1, logic().favorites(9201).size)
+            assertTrue(service.removeFavorite(9201, animalId))
+            assertTrue(service.removeFavorite(9201, animalId))
+            assertTrue(logic().favorites(9201).isEmpty())
+            assertTrue(logic().search(9201, "animals").stickers.isEmpty())
+            val literal = publish("fav_100", 0)
+            assertEquals(listOf("fav_100"), service.search(9201, "_").packs.map { it.packId })
+            assertTrue(service.search(9201, "%").packs.isEmpty())
+            assertTrue(service.search(9201, "' OR 1=1 --").stickers.isEmpty())
+            assertEquals(listOf("fav_100"), service.search(9201, "FAV_100").packs.map { it.packId })
+            assertEquals(listOf(literal.stickers.single().stickerId), service.search(9201, "FAV_100").stickers.map { it.stickerId })
+            assertTrue(service.search(9201, "  ").stickers.isEmpty())
+            assertFails { service.search(9201, "a".repeat(129)) }
+            assertFails { service.search(9201, "bad\u0000query") }
+            val draft = service.make(bytes, PackWrite("favorite_draft", mapOf("en" to "Hidden"), author.id, 1), "first", 9001)
+            assertFails { service.addFavorite(9201, draft.stickers.single().stickerId) }
+            assertFails { service.addFavorite(9201, Long.MAX_VALUE.toString()) }
+            assertFails { service.addFavorite(9201, "invalid") }
+            assertTrue(service.search(9201, "Hidden").stickers.isEmpty())
+            val image = StickerArchive.image(bytes)
+            val manifest = Manifest("favorite_cover", mapOf("en" to "Cover Only"), author.name, 1, "r_1.png",
+                listOf(ManifestEntry("entry", "r_2.png", "", image.width, image.height)))
+            val coverOnly = service.importZip(StoredStickerZip.write(listOf(
+                "manifest.json" to Json.encodeToString(manifest).encodeToByteArray(), "r_1.png" to bytes, "r_2.png" to bytes)), author.id, 9001)
+            service.transition(coverOnly.id, StickerRules.PUBLISHED)
+            assertFails { service.addFavorite(9201, coverOnly.coverId!!) }
+            service.addFavorite(9201, coverOnly.stickers.single().stickerId)
+            assertEquals(listOf(coverOnly.stickers.single().stickerId), service.favorites(9201).map { it.stickerId })
+            assertEquals(listOf("objects", "animals", "smileys").filter { it != "objects" }, service.installed(9201).map { it.packId })
+            val oldRank = publish("rank_old", 0)
+            val newRank = publish("rank_new", 0)
+            service.install(9290, oldRank.packId)
+            assertEquals(listOf(oldRank.packId, newRank.packId), service.search(9290, "rank_").packs.map { it.packId })
+            val defaultRank = publish("rank_default", 1)
+            assertEquals(listOf(defaultRank.packId, oldRank.packId, newRank.packId), service.search(9290, "rank_").packs.map { it.packId })
+            println("STICKER_FAVORITES_PG_EXECUTED: persistence/idempotency/concurrent add/account ownership/delisted search/literal SQL/draft rejection/default opt-out preserved")
             println("STICKER_DEFAULT_PG_EXECUTED: real PG/storage + defaults/opt-out/version/reinstall/reorder/account isolation/history/concurrent initialization")
         } finally { SqlxDatabase.close() }
     }

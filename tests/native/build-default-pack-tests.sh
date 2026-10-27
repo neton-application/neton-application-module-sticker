@@ -20,6 +20,7 @@ done < <(cat "$classpath"; echo)
   "$module/src/commonTest/kotlin/sticker/logic/StickerArchiveTest.kt" \
   "$module/src/commonTest/kotlin/sticker/logic/PagImportTest.kt" \
   "$module/src/commonTest/kotlin/sticker/logic/StickerDefaultContractTest.kt" \
+  "$module/src/commonTest/kotlin/sticker/logic/StickerSearchRulesTest.kt" \
   "$module/src/nativeTest/kotlin/sticker/logic/ExternalPagInspectorTest.kt" \
   "$module/src/macosArm64Test/kotlin/StickerDefaultInstallPostgresTest.kt" \
   "$module/src/macosArm64Test/kotlin/StickerPackHttpHostTest.kt" \
