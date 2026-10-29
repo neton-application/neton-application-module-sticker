@@ -1,7 +1,7 @@
 # PrivChat sticker service
 
 PLATFORM-owned sticker catalog and administration module. The paired management
-UI is `privchat-application-front-sticker`. This module does not add customer
+UI is `neton-application-front-sticker`. This module does not add customer
 uploads or change the IM message protocol (type 6, `sticker_id` + `image_url`).
 
 Independent packs now expose cover URLs and a draft-editable default-install

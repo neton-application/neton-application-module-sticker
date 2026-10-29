@@ -26,7 +26,7 @@ the source MIT license and manifest SHA256 values before creating the ZIP.
 Command (actual compiled production-linked test executable, not a mock adapter):
 
 ```sh
-bash /Users/zoujiaqing/projects/privchat/privchat-application-module-sticker/tests/pg/run-original-pag.sh \
+bash /Users/zoujiaqing/projects/privchat/neton-application-module-sticker/tests/pg/run-original-pag.sh \
   /tmp/sticker-pag-focused.SuxlZe/production-tests.kexe
 ```
 
@@ -171,7 +171,7 @@ PAG_HTTP_HOST=1 /tmp/sticker-pag-focused.SuxlZe/production-tests.kexe \
 # Wait for PAG_HTTP_READY in the host log before running the client.
 PAG_HTTP_LOG=/tmp/pag-http-rerun-host.log \
 PAG_FIXTURE_ROOT=/Users/zoujiaqing/projects/privchat/privchat-app/privchat/iosApp/build/pag-sdk/fixtures \
-node /Users/zoujiaqing/projects/privchat/privchat-application-module-sticker/tests/http/pag-lifecycle.mjs
+node /Users/zoujiaqing/projects/privchat/neton-application-module-sticker/tests/http/pag-lifecycle.mjs
 # Stop the temporary host gracefully after the client completes:
 touch /tmp/pag-postgres.ZYhIXH/http-stop
 ```

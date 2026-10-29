@@ -8,7 +8,7 @@ repository's Gradle or any parent Cargo build.
 ## Build And Test
 
 ```sh
-cd privchat-application-module-sticker/tools/sticker-tool
+cd neton-application-module-sticker/tools/sticker-tool
 CARGO_BUILD_JOBS=2 cargo build --locked
 CARGO_BUILD_JOBS=2 cargo test --locked -- --test-threads=1
 cargo fmt --check

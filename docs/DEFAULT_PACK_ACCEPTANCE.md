@@ -94,7 +94,7 @@ To reproduce the PG check without touching retained fixtures:
 
 ```sh
 set -euo pipefail
-root=$(bash /Users/zoujiaqing/projects/privchat/privchat-application-module-sticker/tests/pg/create-default-pack-database.sh)
+root=$(bash /Users/zoujiaqing/projects/privchat/neton-application-module-sticker/tests/pg/create-default-pack-database.sh)
 source "$root/environment.sh"
 /tmp/sticker-packs.native.qoKvus/default-pack-tests.kexe \
   --ktest_filter='StickerDefaultInstallPostgresTest.*' | tee "$root/acceptance.log"
@@ -118,9 +118,9 @@ macosArm64 test classpath file; current local retained path is
 `/tmp/module-sticker-pag-test-classpath.txt`.
 
 ```sh
-bash /Users/zoujiaqing/projects/privchat/privchat-application-module-sticker/tests/native/build-default-pack-tests.sh \
+bash /Users/zoujiaqing/projects/privchat/neton-application-module-sticker/tests/native/build-default-pack-tests.sh \
   /tmp/module-sticker-pag-test-classpath.txt /tmp/sticker-packs.native.RUN
-bash /Users/zoujiaqing/projects/privchat/privchat-application-module-sticker/tests/pg/create-default-pack-database.sh
+bash /Users/zoujiaqing/projects/privchat/neton-application-module-sticker/tests/pg/create-default-pack-database.sh
 ```
 
 The latter creates a NEW private `sticker_packs_*` database on loopback port
@@ -166,7 +166,7 @@ not the clean generator/iOS handoff host:
 ```sh
 STICKER_PACK_HANDOFF=/tmp/sticker-packs.HTTP/handoff-PRIVATE \
 STICKER_PACK_PNG=/absolute/path/to/original/1f600.png \
-node /Users/zoujiaqing/projects/privchat/privchat-application-module-sticker/tests/http/default-pack-lifecycle.mjs
+node /Users/zoujiaqing/projects/privchat/neton-application-module-sticker/tests/http/default-pack-lifecycle.mjs
 ```
 
 The client checks actual HTTP responses; it never mocks fetch/DB/storage. Its

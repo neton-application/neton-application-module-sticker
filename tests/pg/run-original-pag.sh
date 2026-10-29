@@ -1,14 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 base=$(cd "$(dirname "$0")/../../.." && pwd)
-source="$base/privchat-app/privchat/src/commonMain/resources/pag"
+source="$base/../privchat/privchat-app/privchat/src/commonMain/resources/pag"
 exe=${1:?Usage: run-original-pag.sh /absolute/path/production-tests.kexe}
 psql=/opt/homebrew/opt/postgresql@16/bin/psql
 root=$(mktemp -d /tmp/pag-postgres.original.XXXXXX)
 database="pag_backend_test_original_$(date +%Y%m%d%H%M%S)"
 export PAG_TEST_DATABASE_URI="postgresql://sticker_backend_test:testonly@127.0.0.1:55476/$database"
 export PAG_TEST_STORAGE_ROOT="$root"
-export PAG_TEST_INSPECTOR="$base/privchat-app/privchat/iosApp/build/pag-sdk/pag-inspect"
+export PAG_TEST_INSPECTOR="$base/../privchat/privchat-app/privchat/iosApp/build/pag-sdk/pag-inspect"
 export PAG_TEST_STICKER_ZIP="$root/original-sticker-v2.zip"
 export PAG_TEST_EFFECT_FILE="$source/weey-kiss-effect.pag"
 export PAG_TEST_LEGACY_PNG="$root/legacy513.png"
@@ -16,7 +16,7 @@ export PAG_ORIGINAL_SOURCE="$source"
 printf '%s\n' "$root" > /tmp/pag-original-latest-root
 # Only create a new private test database; never reset existing fixture data.
 "$psql" 'postgresql://sticker_backend_test:testonly@127.0.0.1:55476/postgres' -X -v ON_ERROR_STOP=1 -c "CREATE DATABASE $database" > "$root/setup.log"
-for sql in "$base/privchat-application-module-sticker/sql/postgresql/V001__sticker.sql" "$base/privchat-application-module-sticker/sql/postgresql/V003__pag_representations.sql" "$base/privchat-application-module-sticker/sql/postgresql/V004__default_pack_installs.sql" "$base/privchat-application-module-sticker/sql/postgresql/V005__immutable_archive_delivery.sql" "$base/privchat-application-module-effect/sql/postgresql/V001__effect.sql" "$base/privchat-application-module-effect/sql/postgresql/V002__rule_versions.sql"; do
+for sql in "$base/neton-application-module-sticker/sql/postgresql/V001__sticker.sql" "$base/neton-application-module-sticker/sql/postgresql/V003__pag_representations.sql" "$base/neton-application-module-sticker/sql/postgresql/V004__default_pack_installs.sql" "$base/neton-application-module-sticker/sql/postgresql/V005__immutable_archive_delivery.sql" "$base/neton-application-module-effect/sql/postgresql/V001__effect.sql" "$base/neton-application-module-effect/sql/postgresql/V002__rule_versions.sql"; do
   "$psql" "$PAG_TEST_DATABASE_URI" -X -v ON_ERROR_STOP=1 -f "$sql" >> "$root/setup.log"
 done
 node --input-type=module <<'JS'
