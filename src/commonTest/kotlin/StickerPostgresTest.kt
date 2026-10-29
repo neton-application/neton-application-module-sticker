@@ -1,3 +1,6 @@
+// Test fixture opens the database directly; that entry point is an internal Neton API.
+@file:OptIn(neton.core.annotations.InternalNetonApi::class)
+
 import init.generated.StickerMigrationResources
 import kotlinx.coroutines.*
 import neton.core.component.NetonContext

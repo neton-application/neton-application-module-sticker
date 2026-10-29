@@ -1,4 +1,5 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+// Test fixture opens the database directly; that entry point is an internal Neton API.
+@file:OptIn(neton.core.annotations.InternalNetonApi::class, kotlinx.cinterop.ExperimentalForeignApi::class)
 
 import kotlinx.cinterop.*
 import kotlinx.coroutines.runBlocking
