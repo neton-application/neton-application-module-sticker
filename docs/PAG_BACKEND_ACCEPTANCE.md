@@ -5,7 +5,7 @@
 - Sticker: explicit strict import-v2, optional PAG descriptor, verified static
   fallback, immutable association, new V003 PostgreSQL migration, existing
   author/draft/publication/resource authorization and historical v1 behavior.
-- Independent chat-effect sibling: real SQL-backed resources, rights metadata,
+- Independent effect sibling: real SQL-backed resources, rights metadata,
   admin effect/rule actions, official PAG import, immutable revision snapshots,
   account catalog, rule versions/expiry and offline snapshot revocation.
 - Shared code checkout: prior v1 changes retained; tools/sticker-tool, frontend,
@@ -63,7 +63,7 @@ total to claim integration execution.
 The separate opt-in `/tmp/pag-postgres.ZYhIXH/acceptance.log` contains:
 
 ```text
-CHAT_EFFECT_POSTGRES_EXECUTED: official libpag + real PG/storage + rights + rule versions + atomic snapshots + revocation
+EFFECT_POSTGRES_EXECUTED: official libpag + real PG/storage + rights + rule versions + atomic snapshots + revocation
 [       OK ] EffectPostgresTest.officialPagAndPublishedRuleSnapshots (325 ms)
 STICKER_PAG_POSTGRES_EXECUTED: official libpag + real PG/storage + immutable fallback/PAG + legacy 513px publish/read
 [       OK ] StickerPagPostgresTest.officialPagImportPublicationAndHistoricalFallback (244 ms)
@@ -87,14 +87,14 @@ is no claim of a normal assembled-product startup.
 
 Both module Native main and full owned test-source compilations succeeded. The latter
 ran through normal parent settings, without an init script:
-`./gradlew :module-sticker:compileTestKotlinMacosArm64 :module-chat-effect:compileTestKotlinMacosArm64 -Pneton.database.driver=postgres --offline --max-workers=1`.
+`./gradlew :module-sticker:compileTestKotlinMacosArm64 :module-effect:compileTestKotlinMacosArm64 -Pneton.database.driver=postgres --offline --max-workers=1`.
 Log: `/tmp/pag-backend-owned-tests-compile.log`.
 The temporary assembly script
-was used only before the parent included module-chat-effect; subsequent checks
+was used only before the parent included module-effect; subsequent checks
 use normal project settings. Generated `ChateffectModuleManifest` calls
 `init.ChateffectRuntimeBootstrap.initialize(ctx)` before registering 19 routes.
-Both manifest and embedded migration module ID are `chateffect`; config is
-`chat-effect.conf`, explicitly selected by bootstrap. Registration is not proof
+Both manifest and embedded migration module ID are `effect`; config is
+`effect.conf`, explicitly selected by bootstrap. Registration is not proof
 of a production host startup or production database migration.
 
 Focused executable: `/tmp/sticker-pag-focused.SuxlZe/production-tests.kexe`.
@@ -127,7 +127,7 @@ driver dependencies. It does not substitute a fake database or image inspector.
   rights/resource/rule/catalog writes; version freezing; and offline revocation.
 
 Real DB execution markers:
-`STICKER_PAG_POSTGRES_EXECUTED`, `CHAT_EFFECT_POSTGRES_EXECUTED`.
+`STICKER_PAG_POSTGRES_EXECUTED`, `EFFECT_POSTGRES_EXECUTED`.
 Real HTTP marker: `PAG_HTTP_EXECUTED`.
 
 Logs and retained setup:

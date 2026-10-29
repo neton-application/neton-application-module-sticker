@@ -16,7 +16,7 @@ export PAG_ORIGINAL_SOURCE="$source"
 printf '%s\n' "$root" > /tmp/pag-original-latest-root
 # Only create a new private test database; never reset existing fixture data.
 "$psql" 'postgresql://sticker_backend_test:testonly@127.0.0.1:55476/postgres' -X -v ON_ERROR_STOP=1 -c "CREATE DATABASE $database" > "$root/setup.log"
-for sql in "$base/privchat-application-module-sticker/sql/postgresql/V001__sticker.sql" "$base/privchat-application-module-sticker/sql/postgresql/V003__pag_representations.sql" "$base/privchat-application-module-sticker/sql/postgresql/V004__default_pack_installs.sql" "$base/privchat-application-module-sticker/sql/postgresql/V005__immutable_archive_delivery.sql" "$base/privchat-application-module-chat-effect/sql/postgresql/V001__chat_effect.sql" "$base/privchat-application-module-chat-effect/sql/postgresql/V002__rule_versions.sql"; do
+for sql in "$base/privchat-application-module-sticker/sql/postgresql/V001__sticker.sql" "$base/privchat-application-module-sticker/sql/postgresql/V003__pag_representations.sql" "$base/privchat-application-module-sticker/sql/postgresql/V004__default_pack_installs.sql" "$base/privchat-application-module-sticker/sql/postgresql/V005__immutable_archive_delivery.sql" "$base/privchat-application-module-effect/sql/postgresql/V001__effect.sql" "$base/privchat-application-module-effect/sql/postgresql/V002__rule_versions.sql"; do
   "$psql" "$PAG_TEST_DATABASE_URI" -X -v ON_ERROR_STOP=1 -f "$sql" >> "$root/setup.log"
 done
 node --input-type=module <<'JS'
@@ -48,6 +48,6 @@ shasum -a 256 "$exe" "$PAG_TEST_INSPECTOR" "$PAG_TEST_STICKER_ZIP" "$PAG_TEST_EF
 "$exe" --ktest_filter='StickerPagPostgresTest.*:EffectPostgresTest.*' > "$root/acceptance.log" 2>&1
 # A green native runner alone cannot prove that an opt-in body ran.
 grep -q STICKER_PAG_POSTGRES_EXECUTED "$root/acceptance.log"
-grep -q CHAT_EFFECT_POSTGRES_EXECUTED "$root/acceptance.log"
+grep -q EFFECT_POSTGRES_EXECUTED "$root/acceptance.log"
 printf 'ORIGINAL_PAG_REAL_PG_ACCEPTED=%s\nDATABASE=%s\n' "$root" "$database"
 cat "$root/acceptance.log"

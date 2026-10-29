@@ -41,14 +41,14 @@ function zip(files) {
   return Buffer.concat([body,directory,le(0x06054b50),le(0,2),le(0,2),le(n,2),le(n,2),le(directory.length),le(body.length),le(0,2)]);
 }
 const label=`pag-http-${Date.now()}`;
-for(const auth of [null,ADMIN,REFRESH]) await call('/app/chat-effect/catalog',{auth,status:401});
+for(const auth of [null,ADMIN,REFRESH]) await call('/app/effect/catalog',{auth,status:401});
 for(const auth of [null,ACCOUNT,REFRESH,READONLY]) {
   const status=auth===READONLY?403:401;
-  for(const path of ['/admin/sticker/pack/import-v2','/admin/chat-effect/effect/import','/admin/chat-effect/catalog/publish','/admin/chat-effect/rule/create']) {
+  for(const path of ['/admin/sticker/pack/import-v2','/admin/effect/effect/import','/admin/effect/catalog/publish','/admin/effect/rule/create']) {
     await call(path,{method:'POST',body:{},auth,status});
   }
 }
-await call('/admin/chat-effect/effect/create',{method:'POST',body:{effectId:label,version:1,name:'Test',rights:'Test'},cookie:true,status:401});
+await call('/admin/effect/effect/create',{method:'POST',body:{effectId:label,version:1,name:'Test',rights:'Test'},cookie:true,status:401});
 const author=await call('/admin/sticker/author/create',{method:'POST',body:{name:label}});
 function packForm(pag=stickerPag,version=1) {
   const manifest={schema_version:2,pack_id:label,name:{en:label},author:label,version,cover:'fallback.png',stickers:[{key:'original',file:'fallback.png',width:1,height:1,pag:{file:'motion.pag',profile:'pag-sticker-v1'}}]};
@@ -76,32 +76,32 @@ await call(`/app/sticker/resolve/${pag.resourceId}`,{auth:ACCOUNT,status:404});
 await call('/admin/sticker/pack/offline',{method:'POST',body:{id:draft.id}});
 assert.deepEqual(await call(`/app/sticker/resource/get/${pag.resourceId}`,{auth:null}),stickerPag);
 assert.deepEqual(await call(`/app/sticker/resource/get/${fallback.stickerId}`,{auth:null}),png);
-const effect=await call('/admin/chat-effect/effect/create',{method:'POST',body:{effectId:label,version:1,name:'Official logo',rights:'Official upstream test asset, fixture only'}});
+const effect=await call('/admin/effect/effect/create',{method:'POST',body:{effectId:label,version:1,name:'Official logo',rights:'Official upstream test asset, fixture only'}});
 function effectForm(bytes) { const form=new FormData(); form.set('id',effect.id); form.set('file',new Blob([bytes]),'effect.pag'); return form; }
-await call('/admin/chat-effect/effect/import',{method:'POST',body:effectForm(Buffer.from('PAG\0')),status:400});
-const imported=await call('/admin/chat-effect/effect/import',{method:'POST',body:effectForm(logo)});
+await call('/admin/effect/effect/import',{method:'POST',body:effectForm(Buffer.from('PAG\0')),status:400});
+const imported=await call('/admin/effect/effect/import',{method:'POST',body:effectForm(logo)});
 const er=imported.resource; assert.equal(er.profile,'pag-effect-v1'); assert.equal(er.width,800);
-await call(`/app/chat-effect/resource/get/${er.resourceId}`,{auth:null,status:404});
-assert.deepEqual(await call(`/admin/chat-effect/resource/get/${er.resourceId}`),logo);
-const rule=await call('/admin/chat-effect/rule/create',{method:'POST',body:{effectVersionId:effect.id,keywords:['hello','想你了']}});
-await call('/admin/chat-effect/effect/publish',{method:'POST',body:{id:effect.id}});
+await call(`/app/effect/resource/get/${er.resourceId}`,{auth:null,status:404});
+assert.deepEqual(await call(`/admin/effect/resource/get/${er.resourceId}`),logo);
+const rule=await call('/admin/effect/rule/create',{method:'POST',body:{effectVersionId:effect.id,keywords:['hello','想你了']}});
+await call('/admin/effect/effect/publish',{method:'POST',body:{id:effect.id}});
 const expiry=Date.now()+120000;
-const first=await call('/admin/chat-effect/catalog/publish',{method:'POST',body:{expiresAtMs:expiry}});
-const catalog=await call('/app/chat-effect/catalog',{auth:ACCOUNT});
+const first=await call('/admin/effect/catalog/publish',{method:'POST',body:{expiresAtMs:expiry}});
+const catalog=await call('/app/effect/catalog',{auth:ACCOUNT});
 assert.equal(catalog.schemaVersion,1); assert.equal(catalog.revision,first.revision);
 const published=catalog.rules.find(r=>r.ruleId===rule.id);
 assert(published); assert.equal(published.ruleVersion,1); assert.equal(published.expiresAtMs,expiry);
 assert.equal(published.resource.sha256,createHash('sha256').update(logo).digest('hex'));
 assert.equal(published.resource.size,logo.length);
-assert.deepEqual(await call(`/app/chat-effect/resource/get/${er.resourceId}`,{auth:null}),logo);
-const updated=await call('/admin/chat-effect/rule/update',{method:'PUT',body:{...rule.configuration,id:rule.id,priority:99}});
+assert.deepEqual(await call(`/app/effect/resource/get/${er.resourceId}`,{auth:null}),logo);
+const updated=await call('/admin/effect/rule/update',{method:'PUT',body:{...rule.configuration,id:rule.id,priority:99}});
 assert.equal(updated.ruleVersion,2);
-assert.equal((await call('/app/chat-effect/catalog',{auth:ACCOUNT})).rules.find(r=>r.ruleId===rule.id).ruleVersion,1);
-const second=await call('/admin/chat-effect/catalog/publish',{method:'POST',body:{expiresAtMs:expiry}});
+assert.equal((await call('/app/effect/catalog',{auth:ACCOUNT})).rules.find(r=>r.ruleId===rule.id).ruleVersion,1);
+const second=await call('/admin/effect/catalog/publish',{method:'POST',body:{expiresAtMs:expiry}});
 assert(second.revision>first.revision); assert.equal(second.rules.find(r=>r.ruleId===rule.id).ruleVersion,2);
-await call('/admin/chat-effect/effect/offline',{method:'POST',body:{id:effect.id}});
-const revoked=await call('/app/chat-effect/catalog',{auth:ACCOUNT});
+await call('/admin/effect/effect/offline',{method:'POST',body:{id:effect.id}});
+const revoked=await call('/app/effect/catalog',{auth:ACCOUNT});
 assert(revoked.revision>second.revision); assert(!revoked.rules.some(r=>r.ruleId===rule.id));
-assert.deepEqual(await call(`/app/chat-effect/resource/get/${er.resourceId}`,{auth:null}),logo);
-await call('/admin/chat-effect/effect/publish',{method:'POST',body:{id:effect.id},status:400});
+assert.deepEqual(await call(`/app/effect/resource/get/${er.resourceId}`,{auth:null}),logo);
+await call('/admin/effect/effect/publish',{method:'POST',body:{id:effect.id},status:400});
 console.log(`PAG_HTTP_EXECUTED: ${checks} HTTP checks passed; actual routes/realm/RBAC/CSRF/PG/storage + official libpag, not system login/MFA acceptance`);
