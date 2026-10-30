@@ -16,8 +16,10 @@ export PAG_ORIGINAL_SOURCE="$source"
 printf '%s\n' "$root" > /tmp/pag-original-latest-root
 # Only create a new private test database; never reset existing fixture data.
 "$psql" 'postgresql://sticker_backend_test:testonly@127.0.0.1:55476/postgres' -X -v ON_ERROR_STOP=1 -c "CREATE DATABASE $database" > "$root/setup.log"
-for sql in "$base/neton-application-module-sticker/sql/postgresql/V001__sticker.sql" "$base/neton-application-module-sticker/sql/postgresql/V003__pag_representations.sql" "$base/neton-application-module-sticker/sql/postgresql/V004__default_pack_installs.sql" "$base/neton-application-module-sticker/sql/postgresql/V005__immutable_archive_delivery.sql" "$base/neton-application-module-effect/sql/postgresql/V001__effect.sql" "$base/neton-application-module-effect/sql/postgresql/V002__rule_versions.sql"; do
-  "$psql" "$PAG_TEST_DATABASE_URI" -X -v ON_ERROR_STOP=1 -f "$sql" >> "$root/setup.log"
+for owner in system infra account sticker effect; do
+  for sql in V001__schema.sql V002__data.sql; do
+    "$psql" "$PAG_TEST_DATABASE_URI" -X -v ON_ERROR_STOP=1 --single-transaction -f "$base/neton-application-module-$owner/sql/postgresql/$sql" >> "$root/setup.log"
+  done
 done
 node --input-type=module <<'JS'
 import {readFileSync,writeFileSync,copyFileSync,mkdirSync} from 'node:fs';

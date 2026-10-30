@@ -1,5 +1,13 @@
 # Archive Delivery Acceptance
 
+> Historical acceptance record. Since 1.0.0-beta, the migration filenames
+> below are superseded by `sql/postgresql/V001__schema.sql` and
+> `V002__data.sql`. Rebuild and use the fresh-database migration contract in
+> `sql/README.md`; do not replay old patch instructions on current databases.
+> The fixture setup scripts now install real dependency baseline pairs and copy
+> their menu rows into the isolated admin fixture. Old evidence hashes remain unchanged.
+
+
 ## Scope and Contract
 
 Backend module only; no frontend, app, SDK, framework, shared fixture host, account

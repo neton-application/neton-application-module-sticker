@@ -1,0 +1,46 @@
+{
+  "release": "1.0.0-beta",
+  "module": "sticker",
+  "fresh_install_only": true,
+  "dependencies": [
+    "system",
+    "infra",
+    "account"
+  ],
+  "baseline": [
+    {
+      "file": "V001__schema.sql",
+      "sha256": "67c13a78f8633f9e55d933ba5d579015c3e2fb860cc43dc39d413488929cb3bc"
+    },
+    {
+      "file": "V002__data.sql",
+      "sha256": "54e793bd60ba40f0058a1d780d60616c338d7dbc9b968ab0f9cf8e95a09cd16c"
+    }
+  ],
+  "superseded": [
+    {
+      "name": "V001__sticker.sql",
+      "sha256": "ed5895e3181ed5c6225c89ff9f265428b5d0aad7d36ce9d6be32060aad195340"
+    },
+    {
+      "name": "V002__menus.sql",
+      "sha256": "524d7816a7d1008247c0a3852ebcf15dc9323ef923113ed17130deb647676725"
+    },
+    {
+      "name": "V003__pag_representations.sql",
+      "sha256": "898b2b741bf94b14f00633f63657d0d1b0f8306f8f8f7a11821a359c8ef1b363"
+    },
+    {
+      "name": "V004__default_pack_installs.sql",
+      "sha256": "21f3989d019b65453134f4e67e01550963a3cddb8c22fd0f34fc8a550d165d02"
+    },
+    {
+      "name": "V005__immutable_archive_delivery.sql",
+      "sha256": "09f3c9204d92f62a0caf75a6aa8d381690c8722b431d2ec7f23e74c9862b92cf"
+    },
+    {
+      "name": "V006__sticker_favorites.sql",
+      "sha256": "8c5bba557178d5c8da3ab2f0b7856d01934ae5623c23bc547da9f389d7770bfe"
+    }
+  ]
+}

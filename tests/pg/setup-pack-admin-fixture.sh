@@ -9,10 +9,6 @@ source "$root/environment.sh"
 psql=/opt/homebrew/opt/postgresql@16/bin/psql
 "$psql" "$STICKER_PACK_DATABASE_URI" -X -v ON_ERROR_STOP=1 >> "$root/migrations.log" <<'SQL'
 CREATE SCHEMA fixture_admin;
-CREATE TABLE fixture_admin.system_menus (
- id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL, permission TEXT, type INT NOT NULL,
- parent_id BIGINT NOT NULL, path TEXT, component TEXT, icon TEXT, sort INT NOT NULL,
- status INT NOT NULL, created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL
-);
+-- The fresh fixture already installed the real system/sticker baseline seeds.
+CREATE TABLE fixture_admin.system_menus AS TABLE public.system_menus;
 SQL
-"$psql" "$STICKER_PACK_DATABASE_URI" -X -v ON_ERROR_STOP=1 -c 'SET search_path TO fixture_admin,public' -f "$module/sql/postgresql/V002__menus.sql" >> "$root/migrations.log"

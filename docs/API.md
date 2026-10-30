@@ -100,7 +100,10 @@ Every PAG entry requires a structurally validated **static** PNG/WebP fallback. 
 
 `StickerDto` adds `pag:null|{resourceId,url,sha256,size,width,height,durationMs,profile:"pag-sticker-v1"}`. Existing `stickerId`/`imageUrl` identify the fallback forever. PAG has a separate immutable resource ID and a frozen association, created in the attachment transaction. Both resources become public only when the pack publishes; `ready=1` and `ever_published=1` are required for anonymous bytes. Admin previews require `sticker:pack:query`. `/app/sticker/resolve/{id}` retains account-realm authentication and only accepts fallback IDs, never returns raw PAG as an old client's image. Update/offline preserve the old fallback and PAG bytes/association. Legacy draft publishing and historical reads are not revalidated against new limits.
 
-Apply **new** PostgreSQL `V003__pag_representations.sql` through normal embedded migrations before running this version; V001/V002 were not edited. It adds nullable PAG metadata and a distinct `sticker_pag_links` table. No startup DDL.
+For 1.0.0-beta, PAG metadata and `sticker_pag_links` are included in
+`V001__schema.sql`; menus and initial data use `V002__data.sql`. Rebuild and use
+normal embedded migrations on a fresh database. The superseded pre-beta patch
+history is recorded in `sql/baseline.json`. No startup DDL or checksum bypass.
 
 ### Official Inspector Port
 
@@ -179,5 +182,6 @@ another account's favorites never broaden visibility. Matching published packs s
 default first, then this account's active installations, then newest first;
 individual stickers sort by immutable resource ID. IDs stay strings.
 
-Apply `V006__sticker_favorites.sql` through the versioned module migration system
+Favorites are included in the 1.0.0-beta `V001__schema.sql` baseline. Apply both
+baseline files through the versioned module migration system on a fresh database
 before serving these endpoints; normal request/startup paths never perform DDL.
